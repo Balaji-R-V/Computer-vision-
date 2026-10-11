@@ -562,19 +562,68 @@ function renderStatsInUI(stats) {
     if (metricObjects) metricObjects.textContent = stats.total_objects || 0;
     metricFps.textContent = stats.fps || 0.0;
 
-    // Render Non-Person Object Breakdown List
+    // Render Non-Person Office Object Breakdown List
     const objectsBreakdownStrip = document.getElementById('objectsBreakdownStrip');
     const objectsBreakdownList = document.getElementById('objectsBreakdownList');
+    const objectsEngineTag = document.getElementById('objectsEngineTag');
     if (objectsBreakdownStrip && objectsBreakdownList) {
         const counts = stats.object_counts || {};
         const entries = Object.entries(counts);
         if (entries.length > 0) {
             objectsBreakdownStrip.classList.remove('hidden');
-            objectsBreakdownList.innerHTML = entries.map(([objName, count]) => `
-                <span style="background: rgba(16,185,129,0.18); border: 1px solid rgba(16,185,129,0.4); padding: 2px 8px; border-radius: 4px; color: #ffffff; font-weight: 700;">
-                    ${objName.charAt(0).toUpperCase() + objName.slice(1)}: <strong style="color:var(--mint);">${count}</strong>
-                </span>
-            `).join('');
+            objectsBreakdownList.innerHTML = entries.map(([objName, count]) => {
+                let icon = '📦';
+                let tagColor = 'rgba(16,185,129,0.18)';
+                let borderColor = 'rgba(16,185,129,0.4)';
+                let textColor = '#34d399';
+                const lower = objName.toLowerCase();
+                if (lower.includes('chair') || lower.includes('seat')) {
+                    icon = '🪑';
+                    tagColor = 'rgba(16,185,129,0.22)';
+                    borderColor = 'rgba(16,185,129,0.6)';
+                    textColor = '#34d399';
+                } else if (lower.includes('laptop')) {
+                    icon = '💻';
+                    tagColor = 'rgba(245,158,11,0.22)';
+                    borderColor = 'rgba(245,158,11,0.6)';
+                    textColor = '#fbbf24';
+                } else if (lower.includes('desk') || lower.includes('table')) {
+                    icon = '🏢';
+                    tagColor = 'rgba(14,165,233,0.22)';
+                    borderColor = 'rgba(14,165,233,0.6)';
+                    textColor = '#38bdf8';
+                } else if (lower.includes('monitor') || lower.includes('screen') || lower.includes('display')) {
+                    icon = '🖥️';
+                    tagColor = 'rgba(168,85,247,0.22)';
+                    borderColor = 'rgba(168,85,247,0.6)';
+                    textColor = '#c084fc';
+                } else if (lower.includes('phone') || lower.includes('mobile')) {
+                    icon = '📱';
+                    tagColor = 'rgba(236,72,153,0.22)';
+                    borderColor = 'rgba(236,72,153,0.6)';
+                    textColor = '#f472b6';
+                } else if (lower.includes('keyboard')) {
+                    icon = '⌨️';
+                } else if (lower.includes('mouse')) {
+                    icon = '🖱️';
+                } else if (lower.includes('cup') || lower.includes('bottle')) {
+                    icon = '☕';
+                } else if (lower.includes('bag') || lower.includes('backpack')) {
+                    icon = '🎒';
+                }
+                return `
+                    <span style="background: ${tagColor}; border: 1px solid ${borderColor}; padding: 3px 8px; border-radius: 5px; color: #ffffff; font-weight: 700; display:inline-flex; align-items:center; gap:5px; font-size:11px;">
+                        <span>${icon}</span>
+                        <span>${objName}:</span>
+                        <strong style="color:${textColor};">${count}</strong>
+                    </span>
+                `;
+            }).join('');
+            if (objectsEngineTag) {
+                objectsEngineTag.textContent = stats.engine_type === 'aws_rekognition'
+                    ? 'AWS Rekognition Cloud Vision (Office Object Engine)'
+                    : 'Ultralytics YOLO Multi-Object Engine';
+            }
         } else {
             objectsBreakdownStrip.classList.add('hidden');
         }

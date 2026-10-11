@@ -29,6 +29,71 @@ import database
 import app_settings
 from detector import CameraState
 
+# Office Object Classification Taxonomy & Color Map for AWS Rekognition
+OFFICE_LABEL_TAXONOMY = {
+    # Furniture (Chairs, Desks, Tables)
+    'chair': ('Chair', 'furniture', 10),
+    'office chair': ('Chair', 'furniture', 10),
+    'seat': ('Chair', 'furniture', 8),
+    'armchair': ('Chair', 'furniture', 9),
+    'stool': ('Chair', 'furniture', 9),
+    'bench': ('Chair', 'furniture', 8),
+    'desk': ('Desk', 'furniture', 10),
+    'office desk': ('Desk', 'furniture', 10),
+    'table': ('Desk / Table', 'furniture', 8),
+    'computer desk': ('Desk', 'furniture', 10),
+    'dining table': ('Table', 'furniture', 7),
+    'couch': ('Couch', 'furniture', 8),
+    'sofa': ('Couch', 'furniture', 8),
+    'furniture': ('Furniture', 'furniture', 1),
+
+    # Computing & Workstations (Laptops, Monitors, Keyboards, Mice)
+    'laptop': ('Laptop', 'electronics', 10),
+    'laptop computer': ('Laptop', 'electronics', 10),
+    'notebook computer': ('Laptop', 'electronics', 10),
+    'personal computer': ('Computer', 'electronics', 9),
+    'desktop computer': ('Computer', 'electronics', 10),
+    'computer': ('Computer', 'electronics', 8),
+    'monitor': ('Monitor', 'electronics', 10),
+    'computer monitor': ('Monitor', 'electronics', 10),
+    'screen': ('Monitor / Screen', 'electronics', 8),
+    'display': ('Monitor / Screen', 'electronics', 7),
+    'television': ('Screen / TV', 'electronics', 7),
+    'tv': ('Screen / TV', 'electronics', 7),
+    'keyboard': ('Keyboard', 'electronics', 10),
+    'computer keyboard': ('Keyboard', 'electronics', 10),
+    'mouse': ('Mouse', 'electronics', 10),
+    'computer mouse': ('Mouse', 'electronics', 10),
+    'electronics': ('Electronics', 'electronics', 1),
+
+    # Communication & Mobile
+    'cell phone': ('Cell Phone', 'mobile', 10),
+    'mobile phone': ('Cell Phone', 'mobile', 10),
+    'phone': ('Cell Phone', 'mobile', 9),
+    'telephone': ('Telephone', 'mobile', 8),
+    'tablet': ('Tablet', 'mobile', 9),
+
+    # Office Accessories
+    'backpack': ('Backpack', 'accessory', 10),
+    'bag': ('Bag', 'accessory', 8),
+    'handbag': ('Bag', 'accessory', 9),
+    'cup': ('Cup', 'accessory', 9),
+    'coffee cup': ('Cup', 'accessory', 10),
+    'mug': ('Cup', 'accessory', 10),
+    'bottle': ('Bottle', 'accessory', 9),
+    'water bottle': ('Bottle', 'accessory', 10),
+    'book': ('Book', 'accessory', 9),
+    'binder': ('Binder', 'accessory', 9),
+}
+
+CATEGORY_COLORS = {
+    'furniture': (30, 200, 100),    # Emerald Green (BGR)
+    'electronics': (0, 190, 255),   # Cyber Amber (BGR)
+    'mobile': (220, 50, 255),       # Neon Magenta (BGR)
+    'accessory': (255, 170, 50),    # Sky Blue (BGR)
+    'general': (0, 200, 100),       # Mint Green (BGR)
+}
+
 
 class AWSRekognitionDetector:
     """
@@ -366,6 +431,30 @@ class AWSRekognitionDetector:
             diag['message'] = f"AWS Rekognition call error: {e}"
             return diag
 
+    @staticmethod
+    def _deduplicate_objects(raw_objects, iou_thresh=0.60):
+        """Removes overlapping duplicate boxes, keeping the more specific office label."""
+        if not raw_objects:
+            return []
+        sorted_objs = sorted(raw_objects, key=lambda x: (x.get('specificity', 5), x.get('conf', 0)), reverse=True)
+        kept = []
+        for obj in sorted_objs:
+            b1 = obj['box']
+            duplicate = False
+            for k in kept:
+                b2 = k['box']
+                ix1, iy1 = max(b1[0], b2[0]), max(b1[1], b2[1])
+                ix2, iy2 = min(b1[2], b2[2]), min(b1[3], b2[3])
+                inter = max(0, ix2 - ix1) * max(0, iy2 - iy1)
+                union = (b1[2] - b1[0]) * (b1[3] - b1[1]) + (b2[2] - b2[0]) * (b2[3] - b2[1]) - inter
+                iou = inter / union if union > 0 else 0
+                if iou >= iou_thresh:
+                    duplicate = True
+                    break
+            if not duplicate:
+                kept.append(obj)
+        return kept
+
     def _call_aws_rekognition(self, frame):
         """Calls AWS Rekognition detect_labels & detect_faces on a downscaled JPEG."""
         if not self.client:
@@ -386,22 +475,28 @@ class AWSRekognitionDetector:
         jpeg_bytes = buf.tobytes()
 
         persons = []
-        objects = []
+        raw_objects = []
         faces = []
 
         try:
-            # 1. Detect labels (people & objects)
+            # 1. Detect labels (people & office objects) with lower threshold to capture laptops, chairs, phones
+            obj_conf_floor = max(12.0, float(getattr(self, 'obj_conf', 0.10) * 100.0))
             lbl_resp = self.client.detect_labels(
                 Image={'Bytes': jpeg_bytes},
-                MinConfidence=float(self.yolo_conf * 100.0),
-                MaxLabels=25,
+                MinConfidence=obj_conf_floor,
+                MaxLabels=100,
                 Features=['GENERAL_LABELS']
             )
 
             for lbl in lbl_resp.get('Labels', []):
-                name = lbl.get('Name', '')
-                conf = float(lbl.get('Confidence', 0.0)) / 100.0
-                is_person = name.lower() in ('person', 'human', 'people')
+                raw_name = lbl.get('Name', '').strip()
+                lbl_conf = float(lbl.get('Confidence', 0.0)) / 100.0
+                is_person = raw_name.lower() in ('person', 'human', 'people')
+
+                norm_name, category, specificity = OFFICE_LABEL_TAXONOMY.get(
+                    raw_name.lower(),
+                    (raw_name, 'general', 5)
+                )
 
                 for inst in lbl.get('Instances', []):
                     bb = inst.get('BoundingBox', {})
@@ -412,13 +507,28 @@ class AWSRekognitionDetector:
                     x2 = min(w_img, x1 + w)
                     y2 = min(h_img, y1 + h)
 
-                    if x2 - x1 < 15 or y2 - y1 < 25:
+                    if x2 - x1 < 12 or y2 - y1 < 12:
                         continue
 
+                    inst_conf = float(inst.get('Confidence', lbl_conf * 100.0)) / 100.0
+                    box = (x1, y1, x2, y2)
+
                     if is_person:
-                        persons.append({'box': (x1, y1, x2, y2), 'conf': conf})
+                        if inst_conf >= self.yolo_conf:
+                            persons.append({'box': box, 'conf': inst_conf})
                     else:
-                        objects.append({'name': name, 'box': (x1, y1, x2, y2), 'conf': conf})
+                        if inst_conf >= getattr(self, 'obj_conf', 0.10):
+                            raw_objects.append({
+                                'name': norm_name,
+                                'raw_name': raw_name,
+                                'category': category,
+                                'specificity': specificity,
+                                'box': box,
+                                'conf': inst_conf
+                            })
+
+            # Deduplicate overlapping objects (e.g. Chair vs Furniture, Laptop vs Electronics)
+            objects = self._deduplicate_objects(raw_objects)
 
             # 2. Detect faces (for gender & facial matching)
             face_resp = self.client.detect_faces(Image={'Bytes': jpeg_bytes}, Attributes=['ALL'])
@@ -444,16 +554,54 @@ class AWSRekognitionDetector:
         return {'persons': persons, 'objects': objects, 'faces': faces}
 
     def _mock_detections(self, frame):
-        """Simulation fallback if AWS credentials are not configured."""
+        """Simulation fallback if AWS credentials are not configured, with realistic office objects."""
         h, w = frame.shape[:2]
-        # Simple simulated detection in center area so UI runs smoothly
         cx, cy = w // 2, h // 2
         p_w, p_h = int(w * 0.18), int(h * 0.55)
         x1 = max(0, cx - p_w // 2)
         y1 = max(0, cy - p_h // 2)
+
+        # Desk in front
+        d_x1 = max(0, x1 - int(w * 0.12))
+        d_y1 = y1 + int(p_h * 0.50)
+        d_x2 = min(w, x1 + p_w + int(w * 0.15))
+        d_y2 = min(h, y1 + p_h + int(h * 0.12))
+
+        # Laptop on desk
+        lp_w, lp_h = int(w * 0.11), int(h * 0.14)
+        lp_x1 = x1 + int(p_w * 0.1)
+        lp_y1 = d_y1 - int(lp_h * 0.45)
+        lp_x2 = lp_x1 + lp_w
+        lp_y2 = lp_y1 + lp_h
+
+        # Chair occupied by person
+        ch_x1 = max(0, x1 - 15)
+        ch_y1 = y1 + int(p_h * 0.40)
+        ch_x2 = min(w, x1 + p_w + 15)
+        ch_y2 = min(h, y1 + p_h + 10)
+
+        # Adjacent visitor chair
+        ch2_x1 = min(w - 70, x1 + p_w + 35)
+        ch2_y1 = y1 + int(p_h * 0.45)
+        ch2_x2 = min(w, ch2_x1 + int(w * 0.12))
+        ch2_y2 = min(h, ch2_y1 + int(p_h * 0.50))
+
+        # Monitor on desk
+        mon_x1 = min(w - 60, lp_x2 + 20)
+        mon_y1 = max(0, d_y1 - int(h * 0.22))
+        mon_x2 = min(w, mon_x1 + int(w * 0.14))
+        mon_y2 = d_y1 + 10
+
         return {
             'persons': [{'box': (x1, y1, x1 + p_w, y1 + p_h), 'conf': 0.88}],
-            'objects': [{'name': 'Chair', 'box': (x1 + p_w - 20, y1 + int(p_h * 0.5), x1 + p_w + 60, y1 + p_h), 'conf': 0.82}],
+            'objects': [
+                {'name': 'Chair', 'category': 'furniture', 'specificity': 10, 'box': (ch_x1, ch_y1, ch_x2, ch_y2), 'conf': 0.89},
+                {'name': 'Chair', 'category': 'furniture', 'specificity': 10, 'box': (ch2_x1, ch2_y1, ch2_x2, ch2_y2), 'conf': 0.82},
+                {'name': 'Laptop', 'category': 'electronics', 'specificity': 10, 'box': (lp_x1, lp_y1, lp_x2, lp_y2), 'conf': 0.94},
+                {'name': 'Desk', 'category': 'furniture', 'specificity': 10, 'box': (d_x1, d_y1, d_x2, d_y2), 'conf': 0.86},
+                {'name': 'Monitor', 'category': 'electronics', 'specificity': 10, 'box': (mon_x1, mon_y1, mon_x2, mon_y2), 'conf': 0.88},
+                {'name': 'Cell Phone', 'category': 'mobile', 'specificity': 10, 'box': (max(0, lp_x1 - 35), d_y1 + 10, max(0, lp_x1 - 5), d_y1 + 45), 'conf': 0.79}
+            ],
             'faces': [{'box': (x1 + int(p_w * 0.25), y1, x1 + int(p_w * 0.75), y1 + int(p_h * 0.25)), 'gender': 'Male', 'gender_conf': 0.92}]
         }
 
@@ -537,16 +685,29 @@ class AWSRekognitionDetector:
                 person_genders[tid] = self.gender_cache.get(tid, ('Male', 0.65))
             self.gender_cache[tid] = person_genders[tid]
 
-        # Posture estimation (Sitting vs Standing)
+        # Posture estimation (Sitting vs Standing) with Office Furniture & Chair overlap
         postures = {}
         for (box, _conf, tid) in assigned_tracks:
             w = max(box[2] - box[0], 1)
             h = max(box[3] - box[1], 1)
             aspect = float(h) / float(w)
-            # Sitting if aspect ratio < 1.95 or near a chair object
-            near_chair = any(o['name'].lower() in ('chair', 'seat', 'couch') and
-                             max(box[0], o['box'][0]) < min(box[2], o['box'][2]) for o in detected_objects)
-            raw_posture = "Sitting" if (aspect < 1.95 or near_chair) else "Standing"
+            
+            # Check overlap with detected Chair or Desk
+            lower_body_y = box[1] + int(h * 0.40)
+            seated_on_chair = False
+            for o in detected_objects:
+                olow = o['name'].lower()
+                if any(k in olow for k in ('chair', 'seat', 'couch', 'desk', 'bench')):
+                    ob = o['box']
+                    # Horizontal overlap between person and chair/desk
+                    h_overlap = max(0, min(box[2], ob[2]) - max(box[0], ob[0]))
+                    # Vertical overlap with lower torso / legs
+                    v_overlap = max(0, min(box[3], ob[3]) - max(lower_body_y, ob[1]))
+                    if h_overlap > 12 and v_overlap > 10:
+                        seated_on_chair = True
+                        break
+
+            raw_posture = "Sitting" if (aspect < 1.95 or seated_on_chair) else "Standing"
             hist = self.posture_history.setdefault(tid, [])
             hist.append(raw_posture)
             if len(hist) > 9:
@@ -661,15 +822,32 @@ class AWSRekognitionDetector:
                 'posture': posture
             })
 
-        # Draw Objects
+        # Draw Objects with Office Categorized Styling
         if draw_yolo_objects:
             for obj in detected_objects:
                 ox1, oy1, ox2, oy2 = obj['box']
-                cv2.rectangle(annotated, (ox1, oy1), (ox2, oy2), self.COLOR_OBJECT, 1)
-                lbl_txt = f"{obj['name']} {int(obj['conf']*100)}%"
-                (otw, oth), _ = cv2.getTextSize(lbl_txt, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)
-                cv2.rectangle(annotated, (ox1, max(0, oy1 - 18)), (ox1 + otw + 6, oy1), self.COLOR_OBJECT, -1)
-                cv2.putText(annotated, lbl_txt, (ox1 + 3, max(12, oy1 - 5)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)
+                cat = obj.get('category', 'general')
+                color = CATEGORY_COLORS.get(cat, self.COLOR_OBJECT)
+                conf_pct = int(obj['conf'] * 100)
+                name = obj['name'].upper()
+
+                # Bounding box
+                cv2.rectangle(annotated, (ox1, oy1), (ox2, oy2), color, 2)
+                
+                # Corner accent brackets
+                cl = max(6, min(14, (ox2 - ox1) // 4, (oy2 - oy1) // 4))
+                cv2.line(annotated, (ox1, oy1), (ox1 + cl, oy1), (255, 255, 255), 2)
+                cv2.line(annotated, (ox1, oy1), (ox1, oy1 + cl), (255, 255, 255), 2)
+                cv2.line(annotated, (ox2, oy2), (ox2 - cl, oy2), (255, 255, 255), 2)
+                cv2.line(annotated, (ox2, oy2), (ox2, oy2 - cl), (255, 255, 255), 2)
+
+                lbl_txt = f"{name} {conf_pct}%"
+                (otw, oth), _ = cv2.getTextSize(lbl_txt, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+                
+                banner_y = max(0, oy1 - 20)
+                cv2.rectangle(annotated, (ox1, banner_y), (ox1 + otw + 8, oy1), color, -1)
+                cv2.putText(annotated, lbl_txt, (ox1 + 4, max(14, oy1 - 5)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 0, 0), 1)
 
         # Draw Zones
         if draw_zones or zones_list:
@@ -691,10 +869,43 @@ class AWSRekognitionDetector:
         cur_fps = 1.0 / dt
         self._fps_ema = cur_fps if self._fps_ema is None else 0.85 * self._fps_ema + 0.15 * cur_fps
 
+        # Office Object Counts & Aggregation
+        object_counts = {}
+        office_counts = {
+            'chairs': 0,
+            'laptops': 0,
+            'desks': 0,
+            'screens': 0,
+            'phones': 0,
+            'keyboards_mice': 0,
+            'accessories': 0,
+            'other': 0
+        }
+        for o in detected_objects:
+            oname = o['name']
+            object_counts[oname] = object_counts.get(oname, 0) + 1
+            low = oname.lower()
+            if 'chair' in low or 'seat' in low:
+                office_counts['chairs'] += 1
+            elif 'laptop' in low:
+                office_counts['laptops'] += 1
+            elif 'desk' in low or 'table' in low:
+                office_counts['desks'] += 1
+            elif any(k in low for k in ('monitor', 'screen', 'display', 'computer')):
+                office_counts['screens'] += 1
+            elif any(k in low for k in ('phone', 'mobile', 'cell')):
+                office_counts['phones'] += 1
+            elif any(k in low for k in ('keyboard', 'mouse')):
+                office_counts['keyboards_mice'] += 1
+            elif o.get('category') == 'accessory' or any(k in low for k in ('bag', 'cup', 'bottle', 'book')):
+                office_counts['accessories'] += 1
+            else:
+                office_counts['other'] += 1
+
         # Top Cloud Watermark / Status Banner
         cloud_label = f"☁️ AWS REKOGNITION [{self.region}]"
         cv2.putText(annotated, cloud_label, (14, 26), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 210, 0), 2)
-        cv2.putText(annotated, f"LATENCY: {int(dt*1000)}ms | FPS: {self._fps_ema:.1f}", (14, 46),
+        cv2.putText(annotated, f"LATENCY: {int(dt*1000)}ms | FPS: {self._fps_ema:.1f} | OFFICE ITEMS: {len(detected_objects)}", (14, 46),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1)
 
         stats = {
@@ -705,7 +916,12 @@ class AWSRekognitionDetector:
             'person_count': len(assigned_tracks),
             'head_count': len(assigned_tracks),
             'total_objects': len(detected_objects),
-            'object_counts': {o['name']: 1 for o in detected_objects},
+            'object_counts': object_counts,
+            'office_counts': office_counts,
+            'chair_count': office_counts['chairs'],
+            'laptop_count': office_counts['laptops'],
+            'desk_count': office_counts['desks'],
+            'screen_count': office_counts['screens'],
             'fps': round(self._fps_ema, 1),
             'current_person_crops': person_crops,
             'zone_stats': zone_occupants,
