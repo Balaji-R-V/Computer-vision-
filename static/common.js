@@ -85,9 +85,9 @@
                 if (sw.success) {
                     updateEngBtn(nextMode);
                     if (typeof toast === 'function') {
-                        toast(nextMode === 'aws_rekognition' ? '☁️ Switched to AWS Rekognition Cloud Engine' : '⚡ Switched to Local GPU Hardware Engine');
+                        toast(nextMode === 'aws_rekognition' ? '☁️ Live Switched to AWS Rekognition Cloud' : '⚡ Live Switched to Local GPU Hardware');
                     }
-                    setTimeout(() => location.reload(), 1200);
+                    window.dispatchEvent(new CustomEvent('engineChanged', { detail: { mode: nextMode } }));
                 } else {
                     if (typeof toast === 'function') toast(sw.error || 'Failed to switch engine', true);
                 }

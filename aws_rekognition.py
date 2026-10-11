@@ -804,8 +804,8 @@ class AWSRekognitionDetector:
             if draw_heads:
                 color = self.COLOR_MALE if gender == 'Male' else self.COLOR_FEMALE
                 cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 2)
-                # Cloud Engine Badge Tag
-                tag = f"☁️ AWS #{tid} | {gender} ({int(gconf*100)}%) | {posture}"
+                # Person Tag (clean without cloud prefix)
+                tag = f"#{tid} | {gender} ({int(gconf*100)}%) | {posture}"
                 (tw, th), _ = cv2.getTextSize(tag, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
                 cv2.rectangle(annotated, (x1, max(0, y1 - 22)), (x1 + tw + 8, y1), color, -1)
                 cv2.putText(annotated, tag, (x1 + 4, max(14, y1 - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 0), 1)
@@ -902,11 +902,6 @@ class AWSRekognitionDetector:
             else:
                 office_counts['other'] += 1
 
-        # Top Cloud Watermark / Status Banner
-        cloud_label = f"☁️ AWS REKOGNITION [{self.region}]"
-        cv2.putText(annotated, cloud_label, (14, 26), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 210, 0), 2)
-        cv2.putText(annotated, f"LATENCY: {int(dt*1000)}ms | FPS: {self._fps_ema:.1f} | OFFICE ITEMS: {len(detected_objects)}", (14, 46),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1)
 
         stats = {
             'male_count': male_count,

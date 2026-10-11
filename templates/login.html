@@ -153,13 +153,63 @@
             font-size: 12px;
             margin-bottom: 12px;
         }
-        .portal-indicator {
+        .creds-card {
+            margin-top: 18px;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+        }
+        .creds-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             font-size: 10px;
-            padding: 2px 7px;
-            border-radius: 4px;
             font-family: 'JetBrains Mono', monospace;
-            background: rgba(34, 211, 238, 0.15);
+            letter-spacing: .08em;
+            color: var(--ink-dim);
+            margin-bottom: 8px;
+        }
+        .creds-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .btn-cred {
+            background: #050810;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
+            padding: 8px 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+            transition: all .2s ease;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left;
+        }
+        .btn-cred:hover {
+            border-color: var(--cyan);
+            background: rgba(34, 211, 238, 0.08);
+            transform: translateY(-1px);
+        }
+        .btn-cred .cred-role {
+            font-size: 11px;
+            font-weight: 700;
             color: var(--cyan);
+        }
+        .btn-cred:nth-child(2) .cred-role {
+            color: #fbbf24;
+        }
+        .btn-cred:nth-child(2):hover {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.08);
+        }
+        .btn-cred .cred-user {
+            font-size: 10px;
+            color: var(--ink-dim);
         }
     </style>
 </head>
@@ -167,7 +217,6 @@
     <form class="card" method="post" action="{{ '/setup' if setup else '/login' }}">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <h1>AEGIS<span>·OS</span></h1>
-            <span class="portal-indicator" id="portalBadge">⚡ GPU HARDWARE</span>
         </div>
         <p class="sub">
             {% if setup %}
@@ -211,14 +260,36 @@
         <button type="submit" class="btn-submit" id="submitBtn">
             {% if setup %}CREATE ADMINISTRATOR & LAUNCH{% else %}SIGN IN TO ENGINE PORTAL{% endif %}
         </button>
+
+        <!-- Quick Access Credentials Panel -->
+        <div class="creds-card">
+            <div class="creds-header">
+                <span>LOGIN CREDENTIALS</span>
+                <span style="font-size:9px; color:var(--cyan);">1-CLICK FILL</span>
+            </div>
+            <div class="creds-options">
+                <button type="button" class="btn-cred" onclick="autoFill('admin')">
+                    <span class="cred-role">⚡ Administrator</span>
+                    <span class="cred-user">admin / admin123</span>
+                </button>
+                <button type="button" class="btn-cred" onclick="autoFill('in22labs')">
+                    <span class="cred-role">☁️ DevOps In22labs</span>
+                    <span class="cred-user">in22labs / 2[(6#Lo...</span>
+                </button>
+            </div>
+        </div>
     </form>
 
     <script>
+        const CREDENTIALS = {
+            admin: { user: 'admin', pass: 'admin123', engine: 'gpu_local' },
+            in22labs: { user: 'in22labs', pass: '2[(6#Lo<Y^$ZXW9x', engine: 'aws_rekognition' }
+        };
+
         function selectEngine(mode) {
             const input = document.getElementById('engineModeInput');
             const cardGpu = document.getElementById('cardGpu');
             const cardAws = document.getElementById('cardAws');
-            const portalBadge = document.getElementById('portalBadge');
             const submitBtn = document.getElementById('submitBtn');
 
             input.value = mode;
@@ -226,27 +297,42 @@
             if (mode === 'aws_rekognition') {
                 cardAws.className = 'engine-card active active-aws';
                 cardGpu.className = 'engine-card';
-                portalBadge.innerText = '☁️ AWS REKOGNITION';
-                portalBadge.style.color = '#fbbf24';
-                portalBadge.style.background = 'rgba(245, 158, 11, 0.15)';
                 submitBtn.style.background = '#f59e0b';
             } else {
                 cardGpu.className = 'engine-card active';
                 cardAws.className = 'engine-card';
-                portalBadge.innerText = '⚡ GPU HARDWARE';
-                portalBadge.style.color = 'var(--cyan)';
-                portalBadge.style.background = 'rgba(34, 211, 238, 0.15)';
                 submitBtn.style.background = 'var(--cyan)';
             }
         }
 
-        // Initialize from requested_engine
+        function autoFill(key) {
+            const cred = CREDENTIALS[key];
+            if (!cred) return;
+            const uField = document.querySelector('input[name="username"]');
+            const pField = document.querySelector('input[name="password"]');
+            if (uField) uField.value = cred.user;
+            if (pField) pField.value = cred.pass;
+            selectEngine(cred.engine);
+        }
+
+        // Initialize from requested_engine and pre-seed input values
         const initialEngine = "{{ requested_engine }}";
         if (initialEngine === 'aws_rekognition') {
             selectEngine('aws_rekognition');
         } else {
             selectEngine('gpu_local');
         }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const uField = document.querySelector('input[name="username"]');
+            const pField = document.querySelector('input[name="password"]');
+            if (uField && !uField.value) {
+                uField.value = 'admin';
+            }
+            if (pField && !pField.value) {
+                pField.value = 'admin123';
+            }
+        });
     </script>
 </body>
 </html>

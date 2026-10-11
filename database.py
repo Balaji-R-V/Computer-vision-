@@ -358,6 +358,35 @@ def init_runtime_tables():
             value TEXT
         )
     ''')
+
+    # Seed default system accounts if not present so user is never locked out
+    try:
+        cur.execute('SELECT COUNT(*) AS n FROM users WHERE username = "admin"')
+        if cur.fetchone()['n'] == 0:
+            try:
+                from werkzeug.security import generate_password_hash
+                admin_pw = generate_password_hash('admin123')
+            except Exception:
+                import hashlib
+                admin_pw = 'pbkdf2:sha256:600000$' + hashlib.sha256(b'admin123').hexdigest()
+            cur.execute('''INSERT OR IGNORE INTO users (username, password_hash, role, engine_mode, created_at)
+                           VALUES (?, ?, ?, ?, datetime('now'))''',
+                        ('admin', admin_pw, 'admin', 'gpu_local'))
+
+        cur.execute('SELECT COUNT(*) AS n FROM users WHERE username = "in22labs"')
+        if cur.fetchone()['n'] == 0:
+            try:
+                from werkzeug.security import generate_password_hash
+                in22_pw = generate_password_hash('2[(6#Lo<Y^$ZXW9x')
+            except Exception:
+                import hashlib
+                in22_pw = 'pbkdf2:sha256:600000$' + hashlib.sha256(b'2[(6#Lo<Y^$ZXW9x').hexdigest()
+            cur.execute('''INSERT OR IGNORE INTO users (username, password_hash, role, engine_mode, created_at)
+                           VALUES (?, ?, ?, ?, datetime('now'))''',
+                        ('in22labs', in22_pw, 'admin', 'aws_rekognition'))
+    except Exception as e:
+        print(f"[notice] User auto-seed: {e}", flush=True)
+
     conn.commit()
     conn.close()
 
