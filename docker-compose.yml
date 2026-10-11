@@ -22,6 +22,12 @@ services:
       - ./static/uploads:/app/static/uploads
       - ./static/outputs:/app/static/outputs
       - ./logs:/app/logs
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - ./server.py:/app/server.py
+      - ./aws_rekognition.py:/app/aws_rekognition.py
+      - ./engine_manager.py:/app/engine_manager.py
+      - ./detector.py:/app/detector.py
     # Enable GPU support on GCP VM if NVIDIA GPU drivers & nvidia-container-toolkit are installed:
     # deploy:
     #   resources:
