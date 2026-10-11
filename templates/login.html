@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AEGIS·OS — {{ 'First-time setup' if setup else 'Sign in' }}</title>
+    <title>AWS Rekognition — Smart Video Analytics — {{ 'First-time setup' if setup else 'Sign in' }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <style>
@@ -216,34 +216,34 @@
 <body>
     <form class="card" method="post" action="{{ '/setup' if setup else '/login' }}">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <h1>AEGIS<span>·OS</span></h1>
+            <h1 style="font-size:16px; letter-spacing:0.12em;">AWS REKOGNITION<span style="color:var(--cyan);">·SMART VIDEO ANALYTICS</span></h1>
         </div>
         <p class="sub">
             {% if setup %}
-                First-time setup: initialize administrator account and pick your primary vision processing engine.
+                First-time setup: initialize administrator account to access the AWS Rekognition console.
             {% else %}
-                Select your vision processing engine portal and sign in to continue.
+                Sign in to access AWS Rekognition Smart Video Analytics command console.
             {% endif %}
         </p>
 
         {% if error %}<div class="err">{{ error }}</div>{% endif %}
         <input type="hidden" name="next" value="{{ next }}">
-        <input type="hidden" name="engine_mode" id="engineModeInput" value="{{ 'aws_rekognition' if requested_engine == 'aws_rekognition' else 'gpu_local' }}">
+        <input type="hidden" name="engine_mode" id="engineModeInput" value="aws_rekognition">
 
-        <!-- Engine Mode Selection -->
-        <div class="engine-picker-title">
+        <!-- Hidden Engine Selector for Clean UI -->
+        <div class="engine-picker-title" style="display:none;">
             <span>CHOOSE VISION ENGINE</span>
-            <span style="font-size:9px; color:var(--ink-faint);">DUAL ARCHITECTURE</span>
+            <span style="font-size:9px; color:var(--ink-faint);">CLOUD ARCHITECTURE</span>
         </div>
-        <div class="engine-grid">
-            <div class="engine-card {{ 'active' if requested_engine != 'aws_rekognition' else '' }}" id="cardGpu" onclick="selectEngine('gpu_local')">
+        <div class="engine-grid" style="display:none;">
+            <div class="engine-card" id="cardGpu" onclick="selectEngine('gpu_local')">
                 <div class="eng-badge" style="color:var(--cyan);">
                     <span class="led-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22d3ee;box-shadow:0 0 6px #22d3ee;margin-right:6px;"></span> GPU HARDWARE ENGINE
                 </div>
                 <div class="eng-desc">Ultralytics YOLO + OpenCV CUDA/CPU local models</div>
             </div>
 
-            <div class="engine-card {{ 'active active-aws' if requested_engine == 'aws_rekognition' else '' }}" id="cardAws" onclick="selectEngine('aws_rekognition')">
+            <div class="engine-card active active-aws" id="cardAws" onclick="selectEngine('aws_rekognition')">
                 <div class="eng-badge" style="color:#fbbf24;">
                     <span class="led-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;margin-right:6px;"></span> AWS REKOGNITION CLOUD
                 </div>
@@ -257,8 +257,8 @@
         <label class="field-lbl">PASSWORD{% if setup %} (MIN 8 CHARACTERS){% endif %}</label>
         <input name="password" class="field-input" type="password" autocomplete="{{ 'new-password' if setup else 'current-password' }}" required placeholder="••••••••">
 
-        <button type="submit" class="btn-submit" id="submitBtn">
-            {% if setup %}CREATE ADMINISTRATOR & LAUNCH{% else %}SIGN IN TO ENGINE PORTAL{% endif %}
+        <button type="submit" class="btn-submit" id="submitBtn" style="background:#f59e0b;">
+            {% if setup %}CREATE ADMINISTRATOR & LAUNCH{% else %}SIGN IN TO COMMAND PORTAL{% endif %}
         </button>
 
         <!-- Quick Access Credentials Panel -->
@@ -282,7 +282,7 @@
 
     <script>
         const CREDENTIALS = {
-            admin: { user: 'admin', pass: 'admin123', engine: 'gpu_local' },
+            admin: { user: 'admin', pass: 'admin123', engine: 'aws_rekognition' },
             in22labs: { user: 'in22labs', pass: '2[(6#Lo<Y^$ZXW9x', engine: 'aws_rekognition' }
         };
 
@@ -292,16 +292,16 @@
             const cardAws = document.getElementById('cardAws');
             const submitBtn = document.getElementById('submitBtn');
 
-            input.value = mode;
+            input.value = mode || 'aws_rekognition';
 
-            if (mode === 'aws_rekognition') {
-                cardAws.className = 'engine-card active active-aws';
-                cardGpu.className = 'engine-card';
-                submitBtn.style.background = '#f59e0b';
+            if (mode === 'gpu_local') {
+                if (cardGpu) cardGpu.className = 'engine-card active';
+                if (cardAws) cardAws.className = 'engine-card';
+                if (submitBtn) submitBtn.style.background = 'var(--cyan)';
             } else {
-                cardGpu.className = 'engine-card active';
-                cardAws.className = 'engine-card';
-                submitBtn.style.background = 'var(--cyan)';
+                if (cardAws) cardAws.className = 'engine-card active active-aws';
+                if (cardGpu) cardGpu.className = 'engine-card';
+                if (submitBtn) submitBtn.style.background = '#f59e0b';
             }
         }
 
@@ -315,13 +315,8 @@
             selectEngine(cred.engine);
         }
 
-        // Initialize from requested_engine and pre-seed input values
-        const initialEngine = "{{ requested_engine }}";
-        if (initialEngine === 'aws_rekognition') {
-            selectEngine('aws_rekognition');
-        } else {
-            selectEngine('gpu_local');
-        }
+        // Initialize with pure AWS Rekognition
+        selectEngine('aws_rekognition');
 
         window.addEventListener('DOMContentLoaded', () => {
             const uField = document.querySelector('input[name="username"]');

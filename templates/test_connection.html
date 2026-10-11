@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AEGIS·OS — Model & RTSP Connection Test Panel</title>
+    <title>AWS Rekognition — Smart Video Analytics — Cloud Model & RTSP Connection Test Panel</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -112,8 +112,8 @@
                 <circle cx="17" cy="17" r="1.8" fill="#22d3ee" />
             </svg>
             <div>
-                <div class="brand-title">AEGIS<span>·OS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
-                <div class="label-micro" style="margin-top:2px;">MODEL & RTSP CONNECTION TEST PANEL</div>
+                <div class="brand-title">AWS REKOGNITION<span>·SMART VIDEO ANALYTICS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
+                <div class="label-micro" style="margin-top:2px;">AWS REKOGNITION & RTSP CONNECTION TEST PANEL</div>
             </div>
 
             <div class="header-divider"></div>
@@ -121,7 +121,7 @@
             <!-- Page Navigation Tabs -->
             <nav class="nav-tabs">
                 <a href="/" class="nav-tab-btn">LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" class="nav-tab-btn active">MODEL TEST PANEL</a>
+                <a href="/test_connection" class="nav-tab-btn active">CLOUD TEST PANEL</a>
                 <a href="/peoples" class="nav-tab-btn">PEOPLE DATABASE</a>
                 <a href="/occupants" class="nav-tab-btn">OCCUPANT TIME LOGS</a>
             </nav>
@@ -143,21 +143,23 @@
             <div style="display:flex; align-items:center; gap:14px;">
                 <span class="led led-cyan anim-pulse-dot" style="width:12px; height:12px;"></span>
                 <div>
-                    <h2 style="font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; color:#fff; margin:0;">AI MODEL & CAMERA CONNECTION TEST PANEL</h2>
-                    <p style="font-size:12px; color:var(--ink-dim); margin:4px 0 0 0;">Verify model connections, test RTSP streams, benchmark latency, and inspect dual GPU/AWS Rekognition telemetry.</p>
+                    <h2 style="font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; color:#fff; margin:0;">AWS REKOGNITION & CAMERA CONNECTION TEST PANEL</h2>
+                    <p style="font-size:12px; color:var(--ink-dim); margin:4px 0 0 0;">Verify AWS Rekognition cloud vision connection, test RTSP streams, benchmark latency, and inspect smart analytics telemetry.</p>
                 </div>
             </div>
 
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <div style="display:flex; background:#050810; border:1px solid var(--line); border-radius:6px; padding:3px; gap:4px;">
-                    <button id="btnSwitchGpu" class="btn" style="padding:6px 12px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; background:rgba(34,211,238,0.2); color:var(--cyan); border:1px solid var(--cyan);" onclick="switchEngineFromTest('gpu_local')"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22d3ee;margin-right:4px;"></span>GPU ENGINE</button>
-                    <button id="btnSwitchAws" class="btn" style="padding:6px 12px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; background:transparent; color:var(--ink-faint); border:1px solid transparent;" onclick="switchEngineFromTest('aws_rekognition')"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-right:4px;"></span>AWS REKOGNITION</button>
+                <div style="display:flex; background:#050810; border:1px solid rgba(245,158,11,0.4); border-radius:6px; padding:3px 8px; gap:4px; align-items:center;">
+                    <button id="btnSwitchGpu" class="btn" style="display:none;" onclick="switchEngineFromTest('gpu_local')"></button>
+                    <div id="btnSwitchAws" style="padding:4px 10px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; color:#fbbf24; display:flex; align-items:center; gap:6px;">
+                        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;"></span>AWS REKOGNITION ACTIVE
+                    </div>
                 </div>
                 <button class="btn btn-primary" onclick="runDiagnosticTest()" style="font-size:12px; font-weight:700; padding:10px 18px;">RUN DIAGNOSTICS</button>
             </div>
         </div>
 
-        <!-- 5 Model Health Status Cards (GPU + AWS Rekognition) -->
+        <!-- 5 Model Health Status Cards (Pure AWS Rekognition & Smart Analytics) -->
         <div class="test-card-grid" style="grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));">
             <div class="test-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -170,37 +172,37 @@
 
             <div class="test-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:#ffffff; font-family:'Outfit';">YOLO Object Model</strong>
+                    <strong style="color:#ffffff; font-family:'Outfit';">Cloud Object Detection</strong>
                     <span class="status-pill status-online" id="statusYolo">ONLINE</span>
                 </div>
-                <div style="font-size:12px; color:var(--ink-dim);">File: <code>yolo11m.pt / yolov8n.pt</code></div>
-                <div style="font-size:11px; color:var(--ink-faint);">Multi-Class Object & Person Tracking</div>
+                <div style="font-size:12px; color:var(--ink-dim);">Engine: <code>AWS Rekognition DetectLabels</code></div>
+                <div style="font-size:11px; color:var(--ink-faint);">Multi-Class Object & Workspace Analytics</div>
             </div>
 
             <div class="test-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:#ffffff; font-family:'Outfit';">Pose & Posture Model</strong>
+                    <strong style="color:#ffffff; font-family:'Outfit';">Pose & Posture Classifier</strong>
                     <span class="status-pill status-online" id="statusPose">ONLINE</span>
                 </div>
-                <div style="font-size:12px; color:var(--ink-dim);">Net: <code>yolov8n-pose / Spatial Net</code></div>
+                <div style="font-size:12px; color:var(--ink-dim);">Net: <code>Geometric Spatial Pose Net</code></div>
                 <div style="font-size:11px; color:var(--ink-faint);">Sitting vs Standing Classifier</div>
             </div>
 
             <div class="test-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:#ffffff; font-family:'Outfit';">Gender Classification</strong>
+                    <strong style="color:#ffffff; font-family:'Outfit';">Gender Analytics</strong>
                     <span class="status-pill status-online" id="statusGender">ONLINE</span>
                 </div>
-                <div style="font-size:12px; color:var(--ink-dim);">Classifier: <code>Caffe / Rekognition</code></div>
-                <div style="font-size:11px; color:var(--ink-faint);">Male vs Female Analytics</div>
+                <div style="font-size:12px; color:var(--ink-dim);">Engine: <code>AWS Rekognition DetectFaces</code></div>
+                <div style="font-size:11px; color:var(--ink-faint);">Male vs Female Cloud Analytics</div>
             </div>
 
             <div class="test-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong style="color:#ffffff; font-family:'Outfit';">Peoples DB & Gallery</strong>
+                    <strong style="color:#ffffff; font-family:'Outfit';">Face Registry & Re-ID</strong>
                     <span class="status-pill status-online" id="statusDb">ONLINE</span>
                 </div>
-                <div style="font-size:12px; color:var(--ink-dim);">Database: <code>peoples.db</code></div>
+                <div style="font-size:12px; color:var(--ink-dim);">Collection: <code>aegis-rekognition-collection</code></div>
                 <div style="font-size:11px; color:var(--ink-faint);">Registered: <strong id="dbCount" style="color:var(--cyan);">0</strong></div>
             </div>
         </div>
@@ -262,7 +264,7 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        let currentActiveMode = 'gpu_local';
+        let currentActiveMode = 'aws_rekognition';
 
         async function switchEngineFromTest(mode) {
             try {
@@ -283,20 +285,10 @@
         function updateEngineUi(mode) {
             const btnGpu = document.getElementById('btnSwitchGpu');
             const btnAws = document.getElementById('btnSwitchAws');
-            if (mode === 'aws_rekognition') {
-                btnAws.style.background = 'rgba(245,158,11,0.2)';
-                btnAws.style.color = '#fbbf24';
-                btnAws.style.border = '1px solid #f59e0b';
-                btnGpu.style.background = 'transparent';
-                btnGpu.style.color = 'var(--ink-faint)';
-                btnGpu.style.border = '1px solid transparent';
-            } else {
-                btnGpu.style.background = 'rgba(34,211,238,0.2)';
-                btnGpu.style.color = 'var(--cyan)';
-                btnGpu.style.border = '1px solid var(--cyan)';
+            if (btnGpu) btnGpu.style.display = 'none';
+            if (btnAws) {
                 btnAws.style.background = 'transparent';
-                btnAws.style.color = 'var(--ink-faint)';
-                btnAws.style.border = '1px solid transparent';
+                btnAws.style.color = '#fbbf24';
             }
         }
 

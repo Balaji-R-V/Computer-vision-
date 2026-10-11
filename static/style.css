@@ -82,11 +82,12 @@ html, body {
 
 .brand-title {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.12em;
     color: #ffffff;
     line-height: 1;
+    white-space: nowrap;
 }
 
 .brand-title span {

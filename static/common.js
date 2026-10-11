@@ -44,60 +44,14 @@
     refreshBadge();
     setInterval(refreshBadge, 15000);
 
-    // Engine Switcher Pill (Dual Architecture: GPU Local vs AWS Rekognition)
+    // Engine Status Pill (AWS Rekognition Cloud)
     try {
-        const engRes = await (await fetch('/api/engine_mode')).json();
-        let curEngine = engRes.current_engine || (me.engine_mode || 'gpu_local');
         const holder = document.querySelector('.header-right') || document.querySelector('header');
-        
-        const engBtn = document.createElement('button');
+        const engBtn = document.createElement('div');
         engBtn.id = 'headerEngineSwitcher';
-        engBtn.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-right:12px;transition:all .2s;border:1px solid rgba(255,255,255,0.15);background:#050810;";
-        
-        function updateEngBtn(mode) {
-            curEngine = mode;
-            if (mode === 'aws_rekognition') {
-                engBtn.style.borderColor = 'rgba(245,158,11,0.5)';
-                engBtn.style.background = 'rgba(245,158,11,0.12)';
-                engBtn.style.color = '#fbbf24';
-                engBtn.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;"></span> AWS REKOGNITION <span style="font-size:9px;opacity:0.75;background:#050810;padding:1px 4px;border-radius:3px;">SWITCH</span>`;
-                engBtn.title = "Current Engine: AWS Rekognition Cloud Service. Click to switch to Local GPU Engine.";
-            } else {
-                engBtn.style.borderColor = 'rgba(34,211,238,0.5)';
-                engBtn.style.background = 'rgba(34,211,238,0.12)';
-                engBtn.style.color = '#22d3ee';
-                engBtn.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22d3ee;box-shadow:0 0 6px #22d3ee;"></span> GPU ACCELERATED <span style="font-size:9px;opacity:0.75;background:#050810;padding:1px 4px;border-radius:3px;">SWITCH</span>`;
-                engBtn.title = "Current Engine: Local GPU Hardware (YOLO + OpenCV). Click to switch to AWS Rekognition Cloud.";
-            }
-        }
-        updateEngBtn(curEngine);
-
-        engBtn.onclick = async () => {
-            const nextMode = (curEngine === 'aws_rekognition') ? 'gpu_local' : 'aws_rekognition';
-            engBtn.disabled = true;
-            engBtn.style.opacity = '0.6';
-            try {
-                const sw = await (await fetch('/api/engine_mode', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode: nextMode })
-                })).json();
-                if (sw.success) {
-                    updateEngBtn(nextMode);
-                    if (typeof toast === 'function') {
-                        toast(nextMode === 'aws_rekognition' ? 'Active Engine: AWS Rekognition Cloud' : 'Active Engine: Local GPU Hardware');
-                    }
-                    window.dispatchEvent(new CustomEvent('engineChanged', { detail: { mode: nextMode } }));
-                } else {
-                    if (typeof toast === 'function') toast(sw.error || 'Failed to switch engine', true);
-                }
-            } catch (err) {
-                if (typeof toast === 'function') toast('Engine switch error', true);
-            } finally {
-                engBtn.disabled = false;
-                engBtn.style.opacity = '1';
-            }
-        };
+        engBtn.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:6px;margin-right:12px;border:1px solid rgba(245,158,11,0.5);background:rgba(245,158,11,0.12);color:#fbbf24;cursor:default;";
+        engBtn.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;"></span> AWS REKOGNITION <span style="font-size:9px;opacity:0.9;background:#050810;padding:1px 5px;border-radius:3px;color:#34d399;">ONLINE</span>`;
+        engBtn.title = "Vision Engine: AWS Rekognition Cloud Video Analytics";
 
         if (holder) {
             holder.insertBefore(engBtn, holder.firstChild);

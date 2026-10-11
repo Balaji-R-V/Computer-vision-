@@ -606,9 +606,7 @@ function renderStatsInUI(stats) {
                 `;
             }).join('');
             if (objectsEngineTag) {
-                objectsEngineTag.textContent = stats.engine_type === 'aws_rekognition'
-                    ? 'AWS Rekognition Cloud Vision (Office Object Engine)'
-                    : 'Ultralytics YOLO Multi-Object Engine';
+                objectsEngineTag.textContent = 'AWS Rekognition Cloud Vision (Office Object Engine)';
             }
         } else {
             objectsBreakdownStrip.classList.add('hidden');

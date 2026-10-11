@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AEGIS·OS — AI Virtual Boundary & RTSP Stream Command Studio</title>
+    <title>AWS Rekognition — Smart Video Analytics — AI Virtual Boundary & RTSP Command Studio</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,8 +53,8 @@
                 <circle cx="22.5" cy="12" r="1.2" fill="#f87171" class="anim-pulse-dot" />
             </svg>
             <div>
-                <div class="brand-title">AEGIS<span>·OS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
-                <div class="label-micro" style="margin-top:2px;">AI Project Virtual Boundary & RTSP Command</div>
+                <div class="brand-title">AWS REKOGNITION<span>·SMART VIDEO ANALYTICS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
+                <div class="label-micro" style="margin-top:2px;">AI Workspace Boundary & Smart Video Analytics</div>
             </div>
 
             <div class="header-divider"></div>
@@ -62,7 +62,7 @@
             <!-- Page Navigation Tabs -->
             <nav class="nav-links">
                 <a href="/" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--cyan); background:rgba(34,211,238,0.15); box-shadow:inset 0 0 0 1px rgba(34,211,238,0.35); white-space:nowrap;">LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">MODEL TEST PANEL</a>
+                <a href="/test_connection" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">CLOUD TEST PANEL</a>
                 <a href="/peoples" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">PEOPLE DATABASE</a>
                 <a href="/occupants" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">OCCUPANT TIME LOGS</a>
             </nav>
@@ -119,13 +119,13 @@
     <div class="ticker-container">
         <div class="ticker-track">
             <div class="ticker-item"><span class="led led-mint"></span> <span>RTSP STREAM TARGET: rtsp://192.168.1.2:554/Streaming/Channels/401</span></div>
-            <div class="ticker-item"><span class="led led-cyan"></span> <span>MODEL: ULTRALYTICS YOLOv8 POSENET + GENDER CLASSIFIER + FACIAL RE-ID</span></div>
+            <div class="ticker-item"><span class="led led-cyan"></span> <span>ENGINE: AWS REKOGNITION CLOUD VISION + SMART OCCUPANT RE-ID</span></div>
             <div class="ticker-item"><span class="led led-amber"></span> <span>PEOPLE DATABASE: SQLITE RE-ID EMBEDDING MATCHING ACTIVE</span></div>
             <div class="ticker-item"><span class="led led-mint"></span> <span>BOUNDARY ENGINE: 4-DOT CUSTOM PERSPECTIVE POLYGON TEST</span></div>
             <div class="ticker-item"><span class="led led-cyan"></span> <span>AUTH: ADMIN CREDS LOADED FOR NETWORK FEED</span></div>
             <!-- Duplicate for seamless looping -->
             <div class="ticker-item"><span class="led led-mint"></span> <span>RTSP STREAM TARGET: rtsp://192.168.1.2:554/Streaming/Channels/401</span></div>
-            <div class="ticker-item"><span class="led led-cyan"></span> <span>MODEL: ULTRALYTICS YOLOv8 POSENET + GENDER CLASSIFIER + FACIAL RE-ID</span></div>
+            <div class="ticker-item"><span class="led led-cyan"></span> <span>ENGINE: AWS REKOGNITION CLOUD VISION + SMART OCCUPANT RE-ID</span></div>
         </div>
     </div>
 
@@ -230,7 +230,7 @@
                 <div class="checkbox-group" style="margin-top:10px;">
                     <label><input type="checkbox" id="drawTrails"> <span>Motion Trajectory Trails</span></label>
                     <label><input type="checkbox" id="drawHeads" checked> <span>Person Bounding Boxes & Tags</span></label>
-                    <label><input type="checkbox" id="drawObjects" checked> <span>General YOLO Multi-Objects</span></label>
+                    <label><input type="checkbox" id="drawObjects" checked> <span>Detected Office & Workspace Objects</span></label>
                     <label><input type="checkbox" id="drawZones"> <span>Show Partition Overlay on Live Feed</span></label>
                 </div>
             </div>
@@ -350,7 +350,7 @@
                     </div>
                     <div class="metric-card card-objects">
                         <span class="metric-val" id="metricObjects" style="color:var(--mint);">0</span>
-                        <span class="metric-lbl">YOLO Objects</span>
+                        <span class="metric-lbl">Detected Objects</span>
                     </div>
                     <div class="metric-card card-fps">
                         <span class="metric-val" id="metricFps">0.0</span>
@@ -364,7 +364,7 @@
                         <span>DETECTED NON-PERSON OBJECTS:</span>
                         <div id="objectsBreakdownList" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
                     </div>
-                    <span style="font-size:10px; color:var(--ink-dim);" id="objectsEngineTag">Ultralytics YOLO Multi-Object Engine</span>
+                    <span style="font-size:10px; color:var(--ink-dim);" id="objectsEngineTag">AWS Rekognition Cloud Vision (Object Engine)</span>
                 </div>
 
                 <!-- Target Lock Telemetry Banner -->
@@ -511,7 +511,7 @@
     <!-- Sci-Fi Footer -->
     <footer style="padding:16px 20px; border-top:1px solid var(--line); margin-top:20px; text-align:center;">
         <div class="label-micro" style="color:var(--ink-faint);">
-            AEGIS·OS v3.2 — PROFILE “BUILDING A-4” · SILENT-ALERT POLICY ACTIVE · IN-BROWSER VIRTUAL BOUNDARY & RTSP STREAM ENGINE
+            AWS REKOGNITION SMART VIDEO ANALYTICS v3.2 — PROFILE “BUILDING A-4” · SILENT-ALERT POLICY ACTIVE · IN-BROWSER VIRTUAL BOUNDARY & RTSP STREAM ENGINE
         </div>
     </footer>
 
