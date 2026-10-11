@@ -36,8 +36,31 @@ class EngineManager:
 
         print(f"🔀 [EngineManager] Initializing Dual Engine Architecture (Active: {self.active_mode.upper()})...", flush=True)
 
-        # 1. Instantiate Local GPU Engine
-        print("  🔹 Initializing Local GPU Engine (Ultralytics YOLO + OpenCV)...", flush=True)
+        # 1. Instantiate AWS Rekognition Engine
+        print("  🔹 Initializing AWS Rekognition Cloud Engine...", flush=True)
+        try:
+            self.aws_detector = AWSRekognitionDetector(
+                region=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1'),
+                collection_id=os.environ.get('AWS_REKOGNITION_COLLECTION', 'aegis-rekognition-collection')
+            )
+        except Exception as e:
+            print(f"⚠️ Warning initializing AWS detector: {e}", flush=True)
+            self.aws_detector = None
+
+        # 2. Local GPU Engine (eager only if active_mode == ENGINE_GPU, otherwise lazy on-demand)
+        self.gpu_detector = None
+        if self.active_mode == ENGINE_GPU:
+            self._ensure_gpu_detector()
+        else:
+            print("  ⚡ [EngineManager] Standalone AWS Rekognition Mode: Local GPU YOLO models bypassed.", flush=True)
+
+        print(f"✅ [EngineManager] Engine Ready! Active Engine: {self.active_mode.upper()}", flush=True)
+
+    def _ensure_gpu_detector(self):
+        """Lazily instantiates the Local GPU YOLO Engine on demand."""
+        if self.gpu_detector is not None:
+            return self.gpu_detector
+        print("  🔹 Loading Local GPU Engine (Ultralytics YOLO + OpenCV)...", flush=True)
         try:
             self.gpu_detector = HeadGenderYOLODetector(
                 yolo_model_name='yolo11m.pt',
@@ -57,19 +80,7 @@ class EngineManager:
             except Exception as e2:
                 print(f"Fatal error initializing GPU detector: {e2}", flush=True)
                 self.gpu_detector = None
-
-        # 2. Instantiate AWS Rekognition Engine
-        print("  🔹 Initializing AWS Rekognition Cloud Engine...", flush=True)
-        try:
-            self.aws_detector = AWSRekognitionDetector(
-                region=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1'),
-                collection_id=os.environ.get('AWS_REKOGNITION_COLLECTION', 'aegis-rekognition-collection')
-            )
-        except Exception as e:
-            print(f"⚠️ Warning initializing AWS detector: {e}", flush=True)
-            self.aws_detector = None
-
-        print(f"✅ [EngineManager] Dual Engines Ready! Default Engine: {self.active_mode.upper()}", flush=True)
+        return self.gpu_detector
 
     @property
     def current_engine(self):
@@ -177,7 +188,9 @@ class EngineManager:
             if mode == ENGINE_AWS and not self.aws_detector:
                 raise RuntimeError("AWS Rekognition Engine is not available.")
             if mode == ENGINE_GPU and not self.gpu_detector:
-                raise RuntimeError("Local GPU Engine is not available.")
+                self._ensure_gpu_detector()
+                if not self.gpu_detector:
+                    raise RuntimeError("Local GPU Engine failed to initialize.")
 
             self.active_mode = mode
             print(f"🔄 [EngineManager] Switched active engine to: {self.active_mode.upper()} ({self.get_active_label()})", flush=True)

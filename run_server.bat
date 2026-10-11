@@ -4,6 +4,7 @@ REM Optional settings (uncomment and edit):
 REM   set AEGIS_PASSWORD=change-me          (turns on the login)
 REM   set AEGIS_RETENTION_DAYS=30
 REM   set PORT=5050
+set AEGIS_ENGINE_MODE=aws_rekognition
 cd /d "%~dp0"
 set PYTHONIOENCODING=utf-8
 set PY=%LOCALAPPDATA%\Programs\Python\Python311\python.exe
