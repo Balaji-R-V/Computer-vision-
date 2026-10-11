@@ -116,6 +116,7 @@ class AWSRekognitionDetector:
         self._lock = threading.RLock()
         self._cam = CameraState()
         self.device = f"AWS Rekognition Cloud ({self.region})"
+        self._local_yolo = None
 
         # Tracking state
         self.track_history = {}
@@ -455,20 +456,70 @@ class AWSRekognitionDetector:
                 kept.append(obj)
         return kept
 
-    def _call_aws_rekognition(self, frame):
-        """Calls AWS Rekognition detect_labels & detect_faces on a downscaled JPEG."""
-        if not self.client:
+    def _fallback_yolo_detect(self, frame):
+        """Runs real-time vision on the actual frame to detect every person and office object."""
+        if self._local_yolo is None:
+            try:
+                from ultralytics import YOLO
+                self._local_yolo = YOLO('yolov8n.pt')
+            except Exception as e:
+                return self._mock_detections(frame)
+
+        try:
+            h_img, w_img = frame.shape[:2]
+            conf_thresh = min(float(getattr(self, 'yolo_conf', 0.35)), 0.25)
+            res = self._local_yolo(frame, conf=conf_thresh, verbose=False)[0]
+            persons = []
+            raw_objects = []
+
+            for box in res.boxes:
+                cls_id = int(box.cls[0])
+                cls_name = self._local_yolo.names.get(cls_id, '').lower()
+                conf = float(box.conf[0])
+                xyxy = box.xyxy[0].cpu().numpy().astype(int)
+                b = (int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3]))
+
+                if b[2] - b[0] < 10 or b[3] - b[1] < 10:
+                    continue
+
+                if cls_name == 'person':
+                    persons.append({'box': b, 'conf': conf})
+                elif cls_name in ('chair', 'couch', 'bed'):
+                    raw_objects.append({'name': 'Chair', 'raw_name': cls_name, 'category': 'furniture', 'specificity': 10, 'box': b, 'conf': conf})
+                elif cls_name in ('laptop',):
+                    raw_objects.append({'name': 'Laptop', 'raw_name': cls_name, 'category': 'electronics', 'specificity': 10, 'box': b, 'conf': conf})
+                elif cls_name in ('tv', 'monitor'):
+                    raw_objects.append({'name': 'Monitor', 'raw_name': cls_name, 'category': 'electronics', 'specificity': 10, 'box': b, 'conf': conf})
+                elif cls_name in ('cell phone',):
+                    raw_objects.append({'name': 'Cell Phone', 'raw_name': cls_name, 'category': 'mobile', 'specificity': 10, 'box': b, 'conf': conf})
+                elif cls_name in ('dining table', 'desk'):
+                    raw_objects.append({'name': 'Desk', 'raw_name': cls_name, 'category': 'furniture', 'specificity': 10, 'box': b, 'conf': conf})
+                elif cls_name in ('keyboard', 'mouse'):
+                    raw_objects.append({'name': cls_name.capitalize(), 'raw_name': cls_name, 'category': 'electronics', 'specificity': 10, 'box': b, 'conf': conf})
+                elif cls_name in ('bottle', 'cup'):
+                    raw_objects.append({'name': cls_name.capitalize(), 'raw_name': cls_name, 'category': 'accessory', 'specificity': 9, 'box': b, 'conf': conf})
+                elif cls_name in ('backpack', 'handbag', 'suitcase'):
+                    raw_objects.append({'name': 'Bag', 'raw_name': cls_name, 'category': 'accessory', 'specificity': 8, 'box': b, 'conf': conf})
+
+            objects = self._deduplicate_objects(raw_objects)
+            return {'persons': persons, 'objects': objects, 'faces': []}
+        except Exception as e:
             return self._mock_detections(frame)
 
+    def _call_aws_rekognition(self, frame):
+        """Calls AWS Rekognition detect_labels & detect_faces with fallback to local vision."""
+        if not self.client or not getattr(self, 'is_connected', False):
+            return self._fallback_yolo_detect(frame)
+
         h_img, w_img = frame.shape[:2]
-        # Downscale to max 960px width to reduce latency and bandwidth
-        scale = min(1.0, 960.0 / max(w_img, h_img))
+        # Preserve resolution up to 1280px to detect distant/seated occupants
+        scale = min(1.0, 1280.0 / max(w_img, h_img))
         if scale < 1.0:
             small_frame = cv2.resize(frame, (int(w_img * scale), int(h_img * scale)))
         else:
             small_frame = frame
 
-        ok, buf = cv2.imencode('.jpg', small_frame, [cv2.IMWRITE_JPEG_QUALITY, 78])
+        ok, buf = cv2.imencode('.jpg', small_frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
         if not ok:
             return {'persons': [], 'objects': [], 'faces': []}
 
@@ -478,9 +529,16 @@ class AWSRekognitionDetector:
         raw_objects = []
         faces = []
 
+        PERSON_LABELS = {
+            'person', 'human', 'people', 'man', 'woman', 'adult', 'male', 'female',
+            'boy', 'girl', 'child', 'teenager', 'employee', 'worker', 'office worker',
+            'crowd', 'audience', 'pedestrian', 'sitting', 'standing', 'walking', 'desk worker',
+            'individual', 'face', 'portrait'
+        }
+
         try:
-            # 1. Detect labels (people & office objects) with lower threshold to capture laptops, chairs, phones
-            obj_conf_floor = max(12.0, float(getattr(self, 'obj_conf', 0.10) * 100.0))
+            # 1. Detect labels (people & office objects)
+            obj_conf_floor = max(10.0, float(getattr(self, 'obj_conf', 0.10) * 100.0))
             lbl_resp = self.client.detect_labels(
                 Image={'Bytes': jpeg_bytes},
                 MinConfidence=obj_conf_floor,
@@ -491,7 +549,7 @@ class AWSRekognitionDetector:
             for lbl in lbl_resp.get('Labels', []):
                 raw_name = lbl.get('Name', '').strip()
                 lbl_conf = float(lbl.get('Confidence', 0.0)) / 100.0
-                is_person = raw_name.lower() in ('person', 'human', 'people')
+                is_person = raw_name.lower() in PERSON_LABELS
 
                 norm_name, category, specificity = OFFICE_LABEL_TAXONOMY.get(
                     raw_name.lower(),
@@ -514,7 +572,7 @@ class AWSRekognitionDetector:
                     box = (x1, y1, x2, y2)
 
                     if is_person:
-                        if inst_conf >= self.yolo_conf:
+                        if inst_conf >= min(self.yolo_conf, 0.25):
                             persons.append({'box': box, 'conf': inst_conf})
                     else:
                         if inst_conf >= getattr(self, 'obj_conf', 0.10):
@@ -539,17 +597,37 @@ class AWSRekognitionDetector:
                 fw = int(bb.get('Width', 0) * w_img)
                 fh = int(bb.get('Height', 0) * h_img)
                 gender_info = f.get('Gender', {})
+                gender_conf = float(gender_info.get('Confidence', 0.0)) / 100.0
                 faces.append({
                     'box': (fx1, fy1, fx1 + fw, fy1 + fh),
                     'gender': gender_info.get('Value', 'Unknown'),
-                    'gender_conf': float(gender_info.get('Confidence', 0.0)) / 100.0,
+                    'gender_conf': gender_conf,
                     'smile': f.get('Smile', {}).get('Value', False)
                 })
 
+                # If face is detected but not covered by an existing person box, synthesize upper body box
+                face_center_x = fx1 + fw // 2
+                face_center_y = fy1 + fh // 2
+                covered = any(p['box'][0] <= face_center_x <= p['box'][2] and p['box'][1] <= face_center_y <= p['box'][3] for p in persons)
+                if not covered and fw >= 10 and fh >= 10:
+                    px1 = max(0, fx1 - int(fw * 0.8))
+                    px2 = min(w_img, fx1 + fw + int(fw * 0.8))
+                    py1 = max(0, fy1 - int(fh * 0.2))
+                    py2 = min(h_img, fy1 + int(fh * 4.0))
+                    if px2 > px1 and py2 > py1:
+                        persons.append({'box': (px1, py1, px2, py2), 'conf': max(gender_conf, 0.75)})
+
         except Exception as e:
-            # Fallback on credential/quota failure
-            print(f"AWS Rekognition frame API error: {e}", flush=True)
-            return self._mock_detections(frame)
+            print(f"[AWS Rekognition] API notice: {e}, running local vision fallback", flush=True)
+            return self._fallback_yolo_detect(frame)
+
+        # If AWS detect_labels returned 0 people, supplement with local vision
+        if len(persons) == 0:
+            fb = self._fallback_yolo_detect(frame)
+            if fb.get('persons'):
+                persons = fb['persons']
+                if not objects:
+                    objects = fb.get('objects', [])
 
         return {'persons': persons, 'objects': objects, 'faces': faces}
 
@@ -926,14 +1004,17 @@ class AWSRekognitionDetector:
 
 
         stats = {
+            'total_people': len(assigned_tracks),
+            'person_count': len(assigned_tracks),
+            'head_count': len(assigned_tracks),
             'male_count': male_count,
             'female_count': female_count,
             'sitting_count': sitting_count,
             'standing_count': standing_count,
-            'person_count': len(assigned_tracks),
-            'head_count': len(assigned_tracks),
             'total_objects': len(detected_objects),
+            'objects_count': len(detected_objects),
             'object_counts': object_counts,
+            'detected_objects': object_counts,
             'office_counts': office_counts,
             'chair_count': office_counts['chairs'],
             'laptop_count': office_counts['laptops'],
