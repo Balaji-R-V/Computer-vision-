@@ -120,10 +120,10 @@
 
             <!-- Page Navigation Tabs -->
             <nav class="nav-tabs">
-                <a href="/" class="nav-tab-btn">📺 LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" class="nav-tab-btn active">🔌 MODEL TEST PANEL</a>
-                <a href="/peoples" class="nav-tab-btn">👥 PEOPLE DATABASE</a>
-                <a href="/occupants" class="nav-tab-btn">📊 OCCUPANT TIME LOGS</a>
+                <a href="/" class="nav-tab-btn">LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" class="nav-tab-btn active">MODEL TEST PANEL</a>
+                <a href="/peoples" class="nav-tab-btn">PEOPLE DATABASE</a>
+                <a href="/occupants" class="nav-tab-btn">OCCUPANT TIME LOGS</a>
             </nav>
         </div>
 
@@ -150,10 +150,10 @@
 
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <div style="display:flex; background:#050810; border:1px solid var(--line); border-radius:6px; padding:3px; gap:4px;">
-                    <button id="btnSwitchGpu" class="btn" style="padding:6px 12px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; background:rgba(34,211,238,0.2); color:var(--cyan); border:1px solid var(--cyan);" onclick="switchEngineFromTest('gpu_local')">⚡ GPU ENGINE</button>
-                    <button id="btnSwitchAws" class="btn" style="padding:6px 12px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; background:transparent; color:var(--ink-faint); border:1px solid transparent;" onclick="switchEngineFromTest('aws_rekognition')">☁️ AWS REKOGNITION</button>
+                    <button id="btnSwitchGpu" class="btn" style="padding:6px 12px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; background:rgba(34,211,238,0.2); color:var(--cyan); border:1px solid var(--cyan);" onclick="switchEngineFromTest('gpu_local')"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22d3ee;margin-right:4px;"></span>GPU ENGINE</button>
+                    <button id="btnSwitchAws" class="btn" style="padding:6px 12px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; background:transparent; color:var(--ink-faint); border:1px solid transparent;" onclick="switchEngineFromTest('aws_rekognition')"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-right:4px;"></span>AWS REKOGNITION</button>
                 </div>
-                <button class="btn btn-primary" onclick="runDiagnosticTest()" style="font-size:12px; font-weight:700; padding:10px 18px;">⚡ RUN DIAGNOSTICS</button>
+                <button class="btn btn-primary" onclick="runDiagnosticTest()" style="font-size:12px; font-weight:700; padding:10px 18px;">RUN DIAGNOSTICS</button>
             </div>
         </div>
 
@@ -228,13 +228,16 @@
                     <label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--ink-faint); display:block; margin-bottom:4px;">PASSWORD</label>
                     <input type="password" id="testRtspPass" class="form-control" value="in22labs@2026">
                 </div>
-                <button onclick="testRtspConnection()" class="btn btn-primary" style="padding:9px 16px; font-size:12px; font-weight:700;">🚀 TEST CONNECTION</button>
+                <button onclick="testRtspConnection()" class="btn btn-primary" style="padding:9px 16px; font-size:12px; font-weight:700;">TEST CONNECTION</button>
             </div>
 
             <!-- RTSP Test Output Stream Box -->
             <div id="testStreamViewport" style="margin-top:10px; background:#050810; border:1px solid var(--line); border-radius:8px; min-height:360px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
                 <div id="testPlaceholder" style="text-align:center; color:var(--ink-dim); padding:40px;">
-                    <span style="font-size:36px; display:block; margin-bottom:8px;">📡</span>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 10px auto; opacity:0.6; display:block;">
+                        <circle cx="12" cy="12" r="2"></circle>
+                        <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+                    </svg>
                     <span>Click <strong>"TEST CONNECTION"</strong> to initiate live RTSP camera feed decoding & AI model test</span>
                 </div>
             </div>
@@ -356,7 +359,7 @@
                     viewport.innerHTML = `
                         <div style="width:100%; position:relative;">
                             <div style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.8); border:1px solid var(--cyan); padding:4px 10px; border-radius:4px; font-family:'JetBrains Mono'; font-size:11px; color:var(--cyan);">
-                                📡 RTSP LIVE FEED TEST: ${data.rtsp_url}
+                                RTSP LIVE FEED TEST: ${data.rtsp_url}
                             </div>
                             <img src="${data.stream_url}" style="width:100%; display:block;">
                         </div>
@@ -364,10 +367,10 @@
                     document.getElementById('telDecode').innerText = 'SUCCESS (30 FPS)';
                     document.getElementById('telFps').innerText = '30.0 FPS';
                 } else {
-                    viewport.innerHTML = `<div style="color:#f87171; text-align:center; padding:40px;">❌ Connection Error: ${data.error}</div>`;
+                    viewport.innerHTML = `<div style="color:#f87171; text-align:center; padding:40px;">Connection Error: ${data.error}</div>`;
                 }
             } catch (err) {
-                viewport.innerHTML = `<div style="color:#f87171; text-align:center; padding:40px;">❌ RTSP Server Connection Failed</div>`;
+                viewport.innerHTML = `<div style="color:#f87171; text-align:center; padding:40px;">RTSP Server Connection Failed</div>`;
             }
         }
 

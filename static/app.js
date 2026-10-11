@@ -138,7 +138,7 @@ async function handleFileUpload(file) {
     formData.append('file', file);
 
     fileInfo.classList.remove('hidden');
-    fileInfo.innerHTML = `⏳ Uploading and extracting frame metadata for <strong>${file.name}</strong>...`;
+    fileInfo.innerHTML = `Uploading and extracting frame metadata for <strong>${file.name}</strong>...`;
 
     try {
         const resp = await fetch('/api/upload', {
@@ -153,7 +153,7 @@ async function handleFileUpload(file) {
             appState.imageWidth = data.width;
             appState.imageHeight = data.height;
 
-            fileInfo.innerHTML = `✅ <strong>${file.name}</strong> loaded (${data.width}x${data.height} ${data.file_type === 'video' ? `@ ${data.fps} FPS` : ''})`;
+            fileInfo.innerHTML = `<strong>${file.name}</strong> loaded (${data.width}x${data.height} ${data.file_type === 'video' ? `@ ${data.fps} FPS` : ''})`;
 
             // Load first frame into Image object
             appState.firstFrameImage.onload = () => {
@@ -167,10 +167,10 @@ async function handleFileUpload(file) {
             };
             appState.firstFrameImage.src = data.first_frame;
         } else {
-            fileInfo.innerHTML = `❌ Error: ${data.error}`;
+            fileInfo.innerHTML = `Error: ${data.error}`;
         }
     } catch (err) {
-        fileInfo.innerHTML = `❌ Server connection failed: ${err.message}`;
+        fileInfo.innerHTML = `Server connection failed: ${err.message}`;
     }
 }
 
@@ -310,7 +310,7 @@ function drawPolygon(points, color, name, code, isClosed) {
     if (points.length > 0 && name) {
         const p1x = points[0][0] * canvas.width;
         const p1y = points[0][1] * canvas.height;
-        const titleText = `📁 ${name}` + (code ? ` (${code})` : '');
+        const titleText = `${name}` + (code ? ` (${code})` : '');
 
         ctx.font = "bold 14px Inter, sans-serif";
         const textMetrics = ctx.measureText(titleText);
@@ -345,8 +345,8 @@ function updateShapesList() {
         const item = document.createElement('div');
         item.className = 'shape-item';
         item.innerHTML = `
-            <span><strong style="color:${zone.color};">📁 ${zone.name}</strong> (${zone.project_code || 'PRJ'})</span>
-            <button class="shape-item-del" data-idx="${idx}">🗑️</button>
+            <span><strong style="color:${zone.color};">${zone.name}</strong> (${zone.project_code || 'PRJ'})</span>
+            <button class="shape-item-del" data-idx="${idx}" title="Delete boundary" style="background:none;border:none;color:#f87171;font-size:12px;cursor:pointer;font-weight:700;">✕</button>
         `;
         shapesListContainer.appendChild(item);
     });
@@ -373,7 +373,7 @@ if (toggleStudioBtn && studioSection) {
     toggleStudioBtn.addEventListener('click', () => {
         studioSection.classList.toggle('collapsed');
         const isCollapsed = studioSection.classList.contains('collapsed');
-        toggleStudioBtn.textContent = isCollapsed ? '📐 EXPAND MAPPING STUDIO' : '📐 COLLAPSE MAPPING STUDIO';
+        toggleStudioBtn.textContent = isCollapsed ? 'EXPAND MAPPING STUDIO' : 'COLLAPSE MAPPING STUDIO';
     });
 }
 
@@ -384,7 +384,7 @@ runProcessBtn.addEventListener('click', async () => {
     // Auto-collapse mapping studio panel to prioritize live AI stream viewport (~90% page prominence)
     if (studioSection) {
         studioSection.classList.add('collapsed');
-        if (toggleStudioBtn) toggleStudioBtn.textContent = '📐 EXPAND MAPPING STUDIO';
+        if (toggleStudioBtn) toggleStudioBtn.textContent = 'EXPAND MAPPING STUDIO';
     }
 
     resultsSection.classList.remove('hidden');
@@ -572,49 +572,35 @@ function renderStatsInUI(stats) {
         if (entries.length > 0) {
             objectsBreakdownStrip.classList.remove('hidden');
             objectsBreakdownList.innerHTML = entries.map(([objName, count]) => {
-                let icon = '📦';
                 let tagColor = 'rgba(16,185,129,0.18)';
                 let borderColor = 'rgba(16,185,129,0.4)';
                 let textColor = '#34d399';
                 const lower = objName.toLowerCase();
                 if (lower.includes('chair') || lower.includes('seat')) {
-                    icon = '🪑';
                     tagColor = 'rgba(16,185,129,0.22)';
                     borderColor = 'rgba(16,185,129,0.6)';
                     textColor = '#34d399';
                 } else if (lower.includes('laptop')) {
-                    icon = '💻';
                     tagColor = 'rgba(245,158,11,0.22)';
                     borderColor = 'rgba(245,158,11,0.6)';
                     textColor = '#fbbf24';
                 } else if (lower.includes('desk') || lower.includes('table')) {
-                    icon = '🏢';
                     tagColor = 'rgba(14,165,233,0.22)';
                     borderColor = 'rgba(14,165,233,0.6)';
                     textColor = '#38bdf8';
                 } else if (lower.includes('monitor') || lower.includes('screen') || lower.includes('display')) {
-                    icon = '🖥️';
                     tagColor = 'rgba(168,85,247,0.22)';
                     borderColor = 'rgba(168,85,247,0.6)';
                     textColor = '#c084fc';
                 } else if (lower.includes('phone') || lower.includes('mobile')) {
-                    icon = '📱';
                     tagColor = 'rgba(236,72,153,0.22)';
                     borderColor = 'rgba(236,72,153,0.6)';
                     textColor = '#f472b6';
-                } else if (lower.includes('keyboard')) {
-                    icon = '⌨️';
-                } else if (lower.includes('mouse')) {
-                    icon = '🖱️';
-                } else if (lower.includes('cup') || lower.includes('bottle')) {
-                    icon = '☕';
-                } else if (lower.includes('bag') || lower.includes('backpack')) {
-                    icon = '🎒';
                 }
                 return `
                     <span style="background: ${tagColor}; border: 1px solid ${borderColor}; padding: 3px 8px; border-radius: 5px; color: #ffffff; font-weight: 700; display:inline-flex; align-items:center; gap:5px; font-size:11px;">
-                        <span>${icon}</span>
-                        <span>${objName}:</span>
+                        <span style="width:6px;height:6px;border-radius:50%;background:${textColor};display:inline-block;box-shadow:0 0 4px ${textColor};"></span>
+                        <span style="letter-spacing:0.04em;">${objName.toUpperCase()}:</span>
                         <strong style="color:${textColor};">${count}</strong>
                     </span>
                 `;
@@ -657,11 +643,11 @@ function renderStatsInUI(stats) {
         
         if (elPlayBtn) {
             if (stats.is_paused) {
-                elPlayBtn.innerHTML = '▶️ PLAY';
+                elPlayBtn.innerHTML = 'PLAY';
                 elPlayBtn.style.background = '#10b981';
                 elPlayBtn.style.color = '#000';
             } else {
-                elPlayBtn.innerHTML = '⏸️ PAUSE';
+                elPlayBtn.innerHTML = 'PAUSE';
                 elPlayBtn.style.background = '#00d2ff';
                 elPlayBtn.style.color = '#050810';
             }
@@ -684,7 +670,7 @@ function renderStatsInUI(stats) {
     if (targetFilterIndicator && targetFilterText) {
         if (currentTarget && currentTarget !== 'All') {
             targetFilterIndicator.style.display = 'inline-flex';
-            targetFilterText.textContent = `🎯 FOCUS: PERSON #${currentTarget}`;
+            targetFilterText.textContent = `FOCUS: PERSON #${currentTarget}`;
         } else {
             targetFilterIndicator.style.display = 'none';
         }
@@ -703,7 +689,7 @@ function renderStatsInUI(stats) {
             if (!existingValues.includes(val)) {
                 const opt = document.createElement('option');
                 opt.value = val;
-                opt.textContent = `🎯 Lock Person ID #${val}`;
+                opt.textContent = `Lock Person ID #${val}`;
                 targetPersonSelect.appendChild(opt);
             }
         });
@@ -715,12 +701,12 @@ function renderStatsInUI(stats) {
         const ti = stats.target_info;
         if (ti.found) {
             targetHudTitle.textContent = ti.reacquired 
-                ? `🔄 TARGET RE-ACQUIRED: ID #${ti.track_id}` 
-                : `🎯 TARGET LOCKED: PERSON ID #${ti.track_id}`;
+                ? `TARGET RE-ACQUIRED: ID #${ti.track_id}` 
+                : `TARGET LOCKED: PERSON ID #${ti.track_id}`;
             targetHudStatus.textContent = ti.status || 'ACTIVE TRACKING';
             targetHudStatus.style.color = '#00ffcc';
         } else {
-            targetHudTitle.textContent = `🎯 TARGET LOCK: ID #${ti.track_id || ti.target_id}`;
+            targetHudTitle.textContent = `TARGET LOCK: ID #${ti.track_id || ti.target_id}`;
             targetHudStatus.textContent = ti.status || 'SEARCHING / RE-ACQUIRING...';
             targetHudStatus.style.color = '#ffb300';
         }
@@ -743,14 +729,14 @@ function renderStatsInUI(stats) {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong>📁 ${zname}</strong></td>
+            <td><strong>${zname}</strong></td>
             <td><code>${zdata.project_code || 'N/A'}</code></td>
             <td><strong>${tot}</strong></td>
             <td>${sharePct}%</td>
-            <td style="color:#00d2ff;">👦 ${zdata.male || 0}</td>
-            <td style="color:#ff3cb4;">👧 ${zdata.female || 0}</td>
-            <td style="color:#ff8c00;">🪑 ${zdata.sitting || 0}</td>
-            <td style="color:#22c55e;">🧍 ${zdata.standing || 0}</td>
+            <td style="color:#00d2ff; font-weight:700;">${zdata.male || 0}</td>
+            <td style="color:#ff3cb4; font-weight:700;">${zdata.female || 0}</td>
+            <td style="color:#ff8c00; font-weight:700;">${zdata.sitting || 0}</td>
+            <td style="color:#22c55e; font-weight:700;">${zdata.standing || 0}</td>
         `;
         analyticsTableBody.appendChild(tr);
     });
@@ -759,7 +745,7 @@ function renderStatsInUI(stats) {
         const unassignedPct = ((unassignedCnt / Math.max(grandTotal, 1)) * 100).toFixed(1);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong style="color:#f59e0b;">⚠️ Floating / Unassigned</strong></td>
+            <td><strong style="color:#f59e0b;">FLOATING / UNASSIGNED</strong></td>
             <td><code>NONE</code></td>
             <td><strong>${unassignedCnt}</strong></td>
             <td>${unassignedPct}%</td>
@@ -836,7 +822,7 @@ if (connectRtspBtn) {
         }
 
         fileInfo.classList.remove('hidden');
-        fileInfo.innerHTML = `⏳ Connecting to RTSP stream & capturing reference frame for <strong>${rtspUrl}</strong>...`;
+        fileInfo.innerHTML = `Connecting to RTSP stream & capturing reference frame for <strong>${rtspUrl}</strong>...`;
 
         const payload = {
             rtsp_url: rtspUrl,
@@ -871,8 +857,8 @@ if (connectRtspBtn) {
                 clearLivePersonCrops();
 
                 fileInfo.innerHTML = data.camera_online
-                    ? `📡 <strong>RTSP Stream Connected:</strong> Reference frame captured (${data.width}x${data.height}). Mark your project boundary zones on the canvas below, then click <strong>▶️ START AI DETECTION & SEGREGATION</strong>.`
-                    : `⚠️ <strong>Camera not reachable right now.</strong> You can still draw zones; detection starts automatically once the camera responds (it keeps retrying).`;
+                    ? `<strong>RTSP Stream Connected:</strong> Reference frame captured (${data.width}x${data.height}). Mark your project boundary zones on the canvas below, then click <strong>START AI DETECTION & SEGREGATION</strong>.`
+                    : `<strong>Camera not reachable right now.</strong> You can still draw zones; detection starts automatically once the camera responds (it keeps retrying).`;
 
                 // Load first snapshot frame onto Canvas Studio for zone drawing
                 appState.firstFrameImage.onload = () => {
@@ -890,10 +876,10 @@ if (connectRtspBtn) {
                 };
                 appState.firstFrameImage.src = data.first_frame;
             } else {
-                fileInfo.innerHTML = `❌ RTSP Connection Error: ${data.error}`;
+                fileInfo.innerHTML = `RTSP Connection Error: ${data.error}`;
             }
         } catch (err) {
-            fileInfo.innerHTML = `❌ RTSP Server Connection Failed: ${err.message}`;
+            fileInfo.innerHTML = `RTSP Server Connection Failed: ${err.message}`;
         }
     });
 }
@@ -907,7 +893,7 @@ async function populateDbPeoplesDropdown() {
             data.peoples.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.person_code;
-                opt.textContent = `👤 ${p.person_code} | ${p.name} (${p.department || 'Staff'})`;
+                opt.textContent = `${p.person_code} | ${p.name} (${p.department || 'Staff'})`;
                 targetPersonSelect.appendChild(opt);
             });
         }
@@ -939,12 +925,10 @@ function buildCropCardHTML(p) {
     const isTarget = !!p.is_target;
     const isMale   = gender === 'Male';
     const accColor = isTarget ? '#00d2ff' : (isMale ? '#00d2ff' : '#ff3cb4');
-    const gIcon    = isMale ? '👦' : '👧';
-    const pIcon    = posture === 'Sitting' ? '🪑' : '🧍';
     const zShort   = zone.length > 16 ? zone.slice(0, 14) + '…' : zone;
 
     const targetBadge = isTarget 
-        ? `<div style="position:absolute;top:4px;right:4px;background:#00d2ff;color:#000;font-size:8px;font-weight:900;padding:1px 5px;border-radius:3px;box-shadow:0 0 10px #00d2ff;z-index:2;">🎯 LOCKED</div>`
+        ? `<div style="position:absolute;top:4px;right:4px;background:#00d2ff;color:#050810;font-size:8px;font-weight:900;padding:1px 5px;border-radius:3px;box-shadow:0 0 10px #00d2ff;z-index:2;letter-spacing:0.06em;">LOCKED</div>`
         : '';
 
     const borderStyle = isTarget 
@@ -960,11 +944,16 @@ function buildCropCardHTML(p) {
             transition:transform 0.15s,box-shadow 0.15s;"
         onmouseover="this.style.transform='scale(1.06)';"
         onmouseout="this.style.transform='scale(1)';"
-        title="🎯 Click to Lock & Track Person #${tid} | ${gender} | ${posture} | ${zone}">
+        title="Click to Lock & Track Person #${tid} | ${gender} | ${posture} | ${zone}">
         <div class="crop-img-wrap" style="width:100%;height:100px;overflow:hidden;background:#050812;position:relative;">
             ${face_b64
                 ? `<img src="${face_b64}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="#${tid}">`
-                : `<div class="crop-fallback" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:30px;color:${accColor}44;">🧑</div>`}
+                : `<div class="crop-fallback" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#050812;">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="${accColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                   </div>`}
             <div style="position:absolute;top:4px;left:4px;background:rgba(0,0,0,0.85);border:1px solid ${accColor};
                         border-radius:3px;padding:1px 5px;font-family:'JetBrains Mono';font-size:9px;color:${accColor};font-weight:700;">
                 #${tid}
@@ -972,9 +961,9 @@ function buildCropCardHTML(p) {
             ${targetBadge}
         </div>
         <div class="cc-info" style="padding:6px 7px;font-family:'JetBrains Mono';font-size:9px;line-height:1.55;">
-            <div style="color:${accColor};font-weight:700;">${gIcon} ${gender}</div>
-            <div style="color:#94a3b8;">${pIcon} ${posture}</div>
-            <div style="color:#64748b;font-size:8px;" title="${zone}">📁 ${zShort}</div>
+            <div style="color:${accColor};font-weight:700;display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:${accColor};display:inline-block;"></span>${gender.toUpperCase()}</div>
+            <div style="color:#94a3b8;font-size:8.5px;letter-spacing:0.04em;">${posture.toUpperCase()}</div>
+            <div style="color:#64748b;font-size:8px;letter-spacing:0.04em;" title="${zone}">${zShort.toUpperCase()}</div>
         </div>
     </div>`;
 }
@@ -1010,7 +999,7 @@ window.lockPersonTarget = async function(tid) {
             if (!found) {
                 const opt = document.createElement('option');
                 opt.value = val;
-                opt.textContent = `🎯 Lock Person ID #${val}`;
+                opt.textContent = `Lock Person ID #${val}`;
                 targetPersonSelect.appendChild(opt);
                 targetPersonSelect.value = val;
             }
@@ -1033,7 +1022,7 @@ window.lockPersonTarget = async function(tid) {
 
         if (targetFilterIndicator && targetFilterText) {
             targetFilterIndicator.style.display = 'inline-flex';
-            targetFilterText.textContent = `🎯 FOCUS: PERSON #${val}`;
+            targetFilterText.textContent = `FOCUS: PERSON #${val}`;
         }
     }
 
@@ -1103,7 +1092,7 @@ function renderLivePersonCrops(crops) {
                 existing.style.border = '2px solid #00d2ff';
                 existing.style.boxShadow = '0 0 20px rgba(0,210,255,0.7)';
                 if (imgWrap && !imgWrap.querySelector('[style*="z-index:2"]')) {
-                    imgWrap.insertAdjacentHTML('beforeend', `<div style="position:absolute;top:4px;right:4px;background:#00d2ff;color:#000;font-size:8px;font-weight:900;padding:1px 5px;border-radius:3px;box-shadow:0 0 10px #00d2ff;z-index:2;">🎯 LOCKED</div>`);
+                    imgWrap.insertAdjacentHTML('beforeend', `<div style="position:absolute;top:4px;right:4px;background:#00d2ff;color:#050810;font-size:8px;font-weight:900;padding:1px 5px;border-radius:3px;box-shadow:0 0 10px #00d2ff;z-index:2;letter-spacing:0.06em;">LOCKED</div>`);
                 }
             }
 
@@ -1112,14 +1101,12 @@ function renderLivePersonCrops(crops) {
             if (infoDiv) {
                 const isMale   = (p.gender || '') === 'Male';
                 const accColor = p.is_target ? '#00d2ff' : (isMale ? '#00d2ff' : '#ff3cb4');
-                const gIcon    = isMale ? '👦' : '👧';
-                const pIcon    = (p.posture || '') === 'Sitting' ? '🪑' : '🧍';
                 const zone     = p.zone || 'Unassigned';
                 const zShort   = zone.length > 16 ? zone.slice(0, 14) + '…' : zone;
                 infoDiv.innerHTML = `
-                    <div style="color:${accColor};font-weight:700;">${gIcon} ${p.gender || 'Unknown'}</div>
-                    <div style="color:#94a3b8;">${pIcon} ${p.posture || '-'}</div>
-                    <div style="color:#64748b;font-size:8px;" title="${zone}">📁 ${zShort}</div>`;
+                    <div style="color:${accColor};font-weight:700;display:flex;align-items:center;gap:4px;"><span style="width:5px;height:5px;border-radius:50%;background:${accColor};display:inline-block;"></span>${(p.gender || 'Unknown').toUpperCase()}</div>
+                    <div style="color:#94a3b8;font-size:8.5px;letter-spacing:0.04em;">${(p.posture || '-').toUpperCase()}</div>
+                    <div style="color:#64748b;font-size:8px;letter-spacing:0.04em;" title="${zone}">${zShort.toUpperCase()}</div>`;
             }
             existing.style.opacity = '1';
         } else {
@@ -1164,13 +1151,13 @@ function updateCameraStatusBadge(status, message) {
     const badge = document.getElementById('rtspLiveBadge');
     if (!badge || !status) return;
     const map = {
-        live:       { text: '🟢 LIVE', color: 'var(--cyan)' },
-        connecting: { text: '🟡 CONNECTING…', color: '#facc15' },
-        offline:    { text: `🔴 OFFLINE${message ? ' — ' + message : ''}`, color: '#fb7185' },
-        stopped:    { text: '⚪ STOPPED', color: '#94a3b8' }
+        live:       { text: 'ONLINE (LIVE)', color: 'var(--cyan)' },
+        connecting: { text: 'CONNECTING…', color: '#facc15' },
+        offline:    { text: `OFFLINE${message ? ' — ' + message : ''}`, color: '#fb7185' },
+        stopped:    { text: 'STANDBY', color: '#94a3b8' }
     };
     const s = map[status] || map.connecting;
-    badge.textContent = `📡 RTSP ${s.text}`;
+    badge.textContent = `RTSP: ${s.text}`;
     badge.style.color = s.color;
     badge.style.borderColor = s.color;
 }
@@ -1180,7 +1167,7 @@ function startRtspViewer(streamId) {
     mediaOutputContainer.innerHTML = `
         <div style="position:relative;">
             <div id="rtspLiveBadge" style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.85); border:1px solid var(--cyan); padding:4px 10px; border-radius:4px; font-family:'JetBrains Mono'; font-size:11px; color:var(--cyan);">
-                📡 RTSP CONNECTING…
+                RTSP CONNECTING…
             </div>
             <img src="/api/rtsp_feed/${encodeURIComponent(streamId)}" alt="Live RTSP AI Detection Feed" style="width:100%; border-radius:12px; border:2px solid var(--cyan); display:block;">
         </div>`;
@@ -1212,7 +1199,7 @@ if (disconnectRtspBtn) {
         runProcessBtn.disabled = true;
         if (fileInfo) {
             fileInfo.classList.remove('hidden');
-            fileInfo.innerHTML = '⏹ Camera disconnected. Occupant logs were saved.';
+            fileInfo.innerHTML = 'Camera disconnected. Occupant logs were saved.';
         }
         restoreActiveSession();
     });
@@ -1252,7 +1239,7 @@ async function restoreActiveSession(streamId) {
         if (![...targetPersonSelect.options].some(o => o.value === val)) {
             const opt = document.createElement('option');
             opt.value = val;
-            opt.textContent = `🎯 Lock Person ID #${val}`;
+            opt.textContent = `Lock Person ID #${val}`;
             targetPersonSelect.appendChild(opt);
         }
         targetPersonSelect.value = val;
@@ -1273,7 +1260,7 @@ async function restoreActiveSession(streamId) {
         if (passInput) passInput.value = '';   // never sent back to the browser
         if (fileInfo) {
             fileInfo.classList.remove('hidden');
-            fileInfo.innerHTML = '📡 <strong>Live session restored</strong> — detection has been running in the background.';
+            fileInfo.innerHTML = '<strong>Live session restored</strong> — detection has been running in the background.';
         }
 
         if (s.first_frame) {
@@ -1291,7 +1278,7 @@ async function restoreActiveSession(streamId) {
 
         if (studioSection) {
             studioSection.classList.add('collapsed');
-            if (toggleStudioBtn) toggleStudioBtn.textContent = '📐 EXPAND MAPPING STUDIO';
+            if (toggleStudioBtn) toggleStudioBtn.textContent = 'EXPAND MAPPING STUDIO';
         }
         startRtspViewer(s.stream_id);
         updateCameraStatusBadge(s.camera_status);
@@ -1300,7 +1287,7 @@ async function restoreActiveSession(streamId) {
         appState.fileType = 'video';
         if (studioSection) {
             studioSection.classList.add('collapsed');
-            if (toggleStudioBtn) toggleStudioBtn.textContent = '📐 EXPAND MAPPING STUDIO';
+            if (toggleStudioBtn) toggleStudioBtn.textContent = 'EXPAND MAPPING STUDIO';
         }
         startVideoViewer(s.filename);
     }

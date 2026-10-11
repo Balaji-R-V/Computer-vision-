@@ -173,10 +173,10 @@
 
             <!-- Page Navigation Tabs -->
             <nav class="nav-tabs">
-                <a href="/" class="nav-tab-btn">📺 LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" class="nav-tab-btn">🔌 MODEL TEST PANEL</a>
-                <a href="/peoples" class="nav-tab-btn">👥 PEOPLE DATABASE</a>
-                <a href="/occupants" class="nav-tab-btn active">📊 OCCUPANT TIME LOGS</a>
+                <a href="/" class="nav-tab-btn">LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" class="nav-tab-btn">MODEL TEST PANEL</a>
+                <a href="/peoples" class="nav-tab-btn">PEOPLE DATABASE</a>
+                <a href="/occupants" class="nav-tab-btn active">OCCUPANT TIME LOGS</a>
             </nav>
         </div>
 
@@ -235,8 +235,8 @@
                     <label class="label-micro" style="margin-bottom:4px; display:block;">FILTER BY GENDER</label>
                     <select id="filterGenderSelect" style="width:100%; padding:8px 12px; background:rgba(5,8,16,0.9); border:1px solid var(--line); border-radius:6px; color:var(--ink); font-family:'JetBrains Mono'; font-size:12px; outline:none;">
                         <option value="All">All Genders</option>
-                        <option value="Male">👦 Male</option>
-                        <option value="Female">👧 Female</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
                     </select>
                 </div>
 
@@ -246,8 +246,8 @@
                 </div>
 
                 <div style="margin-top:16px;">
-                    <button class="btn btn-primary" id="refreshRosterBtn" style="width:100%;">🔄 REFRESH ROSTER</button>
-                    <button class="btn btn-secondary" id="exportCsvBtn" style="width:100%; margin-top:6px;">⬇ EXPORT CSV</button>
+                    <button class="btn btn-primary" id="refreshRosterBtn" style="width:100%;">REFRESH ROSTER</button>
+                    <button class="btn btn-secondary" id="exportCsvBtn" style="width:100%; margin-top:6px;">EXPORT CSV</button>
                 </div>
             </div>
         </div>
@@ -402,11 +402,11 @@
         function renderSessionStatus(data) {
             const el = document.getElementById('sessionStatus');
             if (data.live) {
-                const cam = data.camera_status === 'live' ? '🟢 LIVE' : `🟡 ${String(data.camera_status || '').toUpperCase()}`;
+                const cam = data.camera_status === 'live' ? 'ONLINE (LIVE)' : String(data.camera_status || '').toUpperCase();
                 el.textContent = `${cam} · UPDATING EVERY 2s`;
                 el.style.color = 'var(--mint)';
             } else if (data.session_id) {
-                el.textContent = '📁 SAVED LOG (no live feed running)';
+                el.textContent = 'ARCHIVED LOG (no live feed running)';
                 el.style.color = 'var(--amber)';
             } else {
                 el.textContent = '— NO SESSIONS YET';
@@ -429,7 +429,7 @@
             spacesSet.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s;
-                opt.textContent = `📁 ${s}`;
+                opt.textContent = s;
                 filterSpaceSelect.appendChild(opt);
             });
             filterSpaceSelect.value = currentVal;
@@ -465,7 +465,7 @@
 
             if (filtered.length === 0) {
                 grid.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--ink-dim); font-family: 'JetBrains Mono';">
-                    📷 No occupants recorded yet. Connect a camera or run a video in the Live Command Studio; logs are saved automatically and stay here after you switch pages.
+                    No occupants recorded yet. Connect a camera or run a video in the Live Command Studio; logs are saved automatically and stay here after you switch pages.
                 </div>`;
                 return;
             }
@@ -477,10 +477,9 @@
 
                 const avatarHtml = occ.face_b64 
                     ? `<img src="${occ.face_b64}" class="occ-avatar-img" alt="Track ID #${occ.track_id}">`
-                    : `<div class="occ-avatar-placeholder">👤</div>`;
+                    : `<div class="occ-avatar-placeholder" style="display:flex;align-items:center;justify-content:center;background:#050810;color:var(--cyan);font-family:'JetBrains Mono';font-size:11px;font-weight:700;">ID</div>`;
 
                 const genderColor = occ.gender === 'Female' ? 'var(--magenta)' : 'var(--cyan)';
-                const genderIcon = occ.gender === 'Female' ? '👧' : '👦';
 
                 // Build Stacked Space Distribution Bar
                 let distSegmentsHtml = '';
@@ -494,7 +493,7 @@
 
                     spaceBreakdownHtml += `
                         <div class="legend-item">
-                            <span><strong style="color:${c};">📁 ${zname}</strong></span>
+                            <span><strong style="color:${c};">${zname}</strong></span>
                             <span><strong>${fmtSec(sec)}</strong> (${pct}%)</span>
                         </div>
                     `;
@@ -510,17 +509,17 @@
                     <div class="occ-header">
                         ${avatarHtml}
                         <div style="flex:1;">
-                            <div class="occ-id-badge">${isAnonymous(occ.track_id) ? `PERSON TRACK ID #${occ.track_id}` : `👤 ${String(occ.track_id).replace(/[<>&]/g, "")}`}</div>
+                            <div class="occ-id-badge">${isAnonymous(occ.track_id) ? `PERSON TRACK ID #${occ.track_id}` : `ID: ${String(occ.track_id).replace(/[<>&]/g, "")}`}</div>
                             <div style="font-size:11px; margin-top:4px; font-family:'JetBrains Mono'; color:${genderColor};">
-                                ${genderIcon} ${occ.gender} (${(occ.gender_conf * 100).toFixed(0)}%) · ${occ.posture || 'Active'}
+                                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${genderColor};margin-right:4px;"></span>${occ.gender} (${(occ.gender_conf * 100).toFixed(0)}%) · ${occ.posture || 'Active'}
                             </div>
                             <div style="font-size:11px; margin-top:2px; font-family:'JetBrains Mono'; color:var(--mint);">
-                                ⏱️ Total Active: <strong>${fmtSec(occ.total_seconds)}</strong>
+                                ACTIVE DURATION: <strong>${fmtSec(occ.total_seconds)}</strong>
                             </div>
                         </div>
                     </div>
 
-                    ${lastLive && isAnonymous(occ.track_id) ? `<button class="btn btn-secondary" style="font-size:11px;" onclick="openLinkDialog('${occ.track_id}')">🔗 This is a registered person…</button>` : ''}
+                    ${lastLive && isAnonymous(occ.track_id) ? `<button class="btn btn-secondary" style="font-size:11px;" onclick="openLinkDialog('${occ.track_id}')">LINK TO REGISTERED PERSON…</button>` : ''}
 
                     <div>
                         <div class="label-micro" style="margin-bottom:4px;">TIME SPENT DISTRIBUTION PER SPACE</div>
@@ -543,9 +542,9 @@
                 // Table Row UI
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${occ.face_b64 ? `<img src="${occ.face_b64}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; border:1px solid var(--line);">` : '👤'}</td>
+                    <td>${occ.face_b64 ? `<img src="${occ.face_b64}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; border:1px solid var(--line);">` : '<div style="width:40px;height:40px;border-radius:6px;border:1px solid var(--line);background:#050810;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink-dim);font-family:\'JetBrains Mono\';">ID</div>'}</td>
                     <td><strong>ID #${occ.track_id}</strong></td>
-                    <td style="color:${genderColor};">${genderIcon} ${occ.gender} (${(occ.gender_conf * 100).toFixed(0)}%)</td>
+                    <td style="color:${genderColor}; font-weight:700;">${occ.gender} (${(occ.gender_conf * 100).toFixed(0)}%)</td>
                     <td>${occ.posture || 'Active'}</td>
                     <td style="color:var(--mint);"><strong>${fmtSec(occ.total_seconds)}</strong></td>
                     <td><code>${occ.current_zone || 'Floating / Unassigned'}</code></td>

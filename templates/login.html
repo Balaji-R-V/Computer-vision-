@@ -238,14 +238,14 @@
         <div class="engine-grid">
             <div class="engine-card {{ 'active' if requested_engine != 'aws_rekognition' else '' }}" id="cardGpu" onclick="selectEngine('gpu_local')">
                 <div class="eng-badge" style="color:var(--cyan);">
-                    <span>⚡</span> GPU Engine
+                    <span class="led-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22d3ee;box-shadow:0 0 6px #22d3ee;margin-right:6px;"></span> GPU HARDWARE ENGINE
                 </div>
                 <div class="eng-desc">Ultralytics YOLO + OpenCV CUDA/CPU local models</div>
             </div>
 
             <div class="engine-card {{ 'active active-aws' if requested_engine == 'aws_rekognition' else '' }}" id="cardAws" onclick="selectEngine('aws_rekognition')">
                 <div class="eng-badge" style="color:#fbbf24;">
-                    <span>☁️</span> AWS Rekognition
+                    <span class="led-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;margin-right:6px;"></span> AWS REKOGNITION CLOUD
                 </div>
                 <div class="eng-desc">Amazon Cloud Vision AI, Face Collection & Labels</div>
             </div>
@@ -269,11 +269,11 @@
             </div>
             <div class="creds-options">
                 <button type="button" class="btn-cred" onclick="autoFill('admin')">
-                    <span class="cred-role">⚡ Administrator</span>
+                    <span class="cred-role"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22d3ee;margin-right:4px;"></span> Administrator</span>
                     <span class="cred-user">admin / admin123</span>
                 </button>
                 <button type="button" class="btn-cred" onclick="autoFill('in22labs')">
-                    <span class="cred-role">☁️ DevOps In22labs</span>
+                    <span class="cred-role"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-right:4px;"></span> DevOps In22labs</span>
                     <span class="cred-user">in22labs / 2[(6#Lo...</span>
                 </button>
             </div>

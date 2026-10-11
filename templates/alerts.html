@@ -7,7 +7,7 @@
         <div class="panel-title-left"><span class="led led-amber"></span><span>ALERT FEED</span></div>
         <div style="display:flex; gap:10px; align-items:center;">
             <label style="font-size:11px; color:var(--ink-dim);"><input type="checkbox" id="onlyOpen"> unacknowledged only</label>
-            <button class="btn btn-secondary" id="ackAllBtn">✔ ACKNOWLEDGE ALL</button>
+            <button class="btn btn-secondary" id="ackAllBtn">ACKNOWLEDGE ALL</button>
         </div>
     </div>
     <div id="feed"></div>
@@ -34,7 +34,7 @@ async function load() {
             <td><strong>${esc(KIND[a.kind] || a.kind)}</strong><br><span style="color:var(--ink-dim)">${esc(a.message)}</span></td>
             <td>${esc(a.camera)}</td>
             <td>${a.snapshot ? `<a href="${esc(a.snapshot)}" target="_blank"><img class="thumb" src="${esc(a.snapshot)}" loading="lazy"></a>` : ''}
-                ${a.clip ? `<a class="clip-link" href="${esc(a.clip)}" target="_blank">▶ view clip</a>` : (a.snapshot && a.kind !== 'camera_offline' && a.kind !== 'camera_online' && (Date.now() - Date.parse(a.ts.replace(' ', 'T'))) < 90000 ? '<span style="color:var(--ink-faint);font-size:11px">clip processing…</span>' : '')}</td>
+                ${a.clip ? `<a class="clip-link" href="${esc(a.clip)}" target="_blank">VIEW CLIP</a>` : (a.snapshot && a.kind !== 'camera_offline' && a.kind !== 'camera_online' && (Date.now() - Date.parse(a.ts.replace(' ', 'T'))) < 90000 ? '<span style="color:var(--ink-faint);font-size:11px">clip processing…</span>' : '')}</td>
             <td>${a.acknowledged ? `<span style="color:var(--ink-faint);font-size:11px">ack by ${esc(a.acknowledged_by)}</span>` : `<button class="btn btn-secondary" onclick="ack(${a.id})">ACK</button>`}</td>
         </tr>`).join('') + '</tbody></table>';
 }

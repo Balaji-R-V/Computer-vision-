@@ -34,17 +34,17 @@ class EngineManager:
         if default_mode in (ENGINE_GPU, ENGINE_AWS):
             self.active_mode = default_mode
 
-        print(f"🔀 [EngineManager] Initializing Dual Engine Architecture (Active: {self.active_mode.upper()})...", flush=True)
+        print(f"[EngineManager] Initializing Dual Engine Architecture (Active: {self.active_mode.upper()})...", flush=True)
 
         # 1. Instantiate AWS Rekognition Engine
-        print("  🔹 Initializing AWS Rekognition Cloud Engine...", flush=True)
+        print("  [EngineManager] Initializing AWS Rekognition Cloud Engine...", flush=True)
         try:
             self.aws_detector = AWSRekognitionDetector(
                 region=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1'),
                 collection_id=os.environ.get('AWS_REKOGNITION_COLLECTION', 'aegis-rekognition-collection')
             )
         except Exception as e:
-            print(f"⚠️ Warning initializing AWS detector: {e}", flush=True)
+            print(f"[EngineManager] Warning initializing AWS detector: {e}", flush=True)
             self.aws_detector = None
 
         # 2. Local GPU Engine (eager only if active_mode == ENGINE_GPU, otherwise lazy on-demand)
@@ -52,15 +52,15 @@ class EngineManager:
         if self.active_mode == ENGINE_GPU:
             self._ensure_gpu_detector()
         else:
-            print("  ⚡ [EngineManager] Standalone AWS Rekognition Mode: Local GPU YOLO models bypassed.", flush=True)
+            print("  [EngineManager] Standalone AWS Rekognition Mode: Local GPU YOLO models bypassed.", flush=True)
 
-        print(f"✅ [EngineManager] Engine Ready! Active Engine: {self.active_mode.upper()}", flush=True)
+        print(f"[EngineManager] Engine Ready! Active Engine: {self.active_mode.upper()}", flush=True)
 
     def _ensure_gpu_detector(self):
         """Lazily instantiates the Local GPU YOLO Engine on demand."""
         if self.gpu_detector is not None:
             return self.gpu_detector
-        print("  🔹 Loading Local GPU Engine (Ultralytics YOLO + OpenCV)...", flush=True)
+        print("  [EngineManager] Loading Local GPU Engine (Ultralytics YOLO + OpenCV)...", flush=True)
         try:
             self.gpu_detector = HeadGenderYOLODetector(
                 yolo_model_name='yolo11m.pt',
@@ -69,7 +69,7 @@ class EngineManager:
                 imgsz=1280
             )
         except Exception as e:
-            print(f"⚠️ Warning initializing GPU detector: {e}. Fallback to CPU/yolov8n.", flush=True)
+            print(f"[EngineManager] Warning initializing GPU detector: {e}. Fallback to CPU/yolov8n.", flush=True)
             try:
                 self.gpu_detector = HeadGenderYOLODetector(
                     yolo_model_name='yolov8n.pt',
@@ -193,7 +193,7 @@ class EngineManager:
                     raise RuntimeError("Local GPU Engine failed to initialize.")
 
             self.active_mode = mode
-            print(f"🔄 [EngineManager] Switched active engine to: {self.active_mode.upper()} ({self.get_active_label()})", flush=True)
+            print(f"[EngineManager] Switched active engine to: {self.active_mode.upper()} ({self.get_active_label()})", flush=True)
             return self.get_status()
 
     def get_status(self):

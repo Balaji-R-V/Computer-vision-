@@ -19,11 +19,11 @@
         return a;
     }
 
-    const alertsLink = addLink('/alerts', '🚨 ALERTS');
-    addLink('/reports', '📈 REPORTS');
+    const alertsLink = addLink('/alerts', 'ALERTS');
+    addLink('/reports', 'REPORTS');
     if (me.role === 'admin') {
-        addLink('/settings', '⚙ SETTINGS');
-        if (me.auth_enabled) addLink('/admin/users', '🔑 USERS');
+        addLink('/settings', 'SETTINGS');
+        if (me.auth_enabled) addLink('/admin/users', 'USERS');
     }
 
     async function refreshBadge() {
@@ -60,13 +60,13 @@
                 engBtn.style.borderColor = 'rgba(245,158,11,0.5)';
                 engBtn.style.background = 'rgba(245,158,11,0.12)';
                 engBtn.style.color = '#fbbf24';
-                engBtn.innerHTML = `☁️ AWS REKOGNITION <span style="font-size:9px;opacity:0.75;background:#050810;padding:1px 4px;border-radius:3px;">SWITCH</span>`;
+                engBtn.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;"></span> AWS REKOGNITION <span style="font-size:9px;opacity:0.75;background:#050810;padding:1px 4px;border-radius:3px;">SWITCH</span>`;
                 engBtn.title = "Current Engine: AWS Rekognition Cloud Service. Click to switch to Local GPU Engine.";
             } else {
                 engBtn.style.borderColor = 'rgba(34,211,238,0.5)';
                 engBtn.style.background = 'rgba(34,211,238,0.12)';
                 engBtn.style.color = '#22d3ee';
-                engBtn.innerHTML = `⚡ GPU ACCELERATED <span style="font-size:9px;opacity:0.75;background:#050810;padding:1px 4px;border-radius:3px;">SWITCH</span>`;
+                engBtn.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22d3ee;box-shadow:0 0 6px #22d3ee;"></span> GPU ACCELERATED <span style="font-size:9px;opacity:0.75;background:#050810;padding:1px 4px;border-radius:3px;">SWITCH</span>`;
                 engBtn.title = "Current Engine: Local GPU Hardware (YOLO + OpenCV). Click to switch to AWS Rekognition Cloud.";
             }
         }
@@ -85,7 +85,7 @@
                 if (sw.success) {
                     updateEngBtn(nextMode);
                     if (typeof toast === 'function') {
-                        toast(nextMode === 'aws_rekognition' ? '☁️ Live Switched to AWS Rekognition Cloud' : '⚡ Live Switched to Local GPU Hardware');
+                        toast(nextMode === 'aws_rekognition' ? 'Active Engine: AWS Rekognition Cloud' : 'Active Engine: Local GPU Hardware');
                     }
                     window.dispatchEvent(new CustomEvent('engineChanged', { detail: { mode: nextMode } }));
                 } else {
@@ -108,7 +108,9 @@
         const holder = document.querySelector('.header-right') || document.querySelector('header');
         const chip = document.createElement('div');
         chip.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:11px;color:#8494ad;margin-left:14px;white-space:nowrap;";
-        chip.innerHTML = `👤 ${me.username} <span style="opacity:.6">(${me.role})</span> · <a href="/logout" style="color:#22d3ee;text-decoration:none;">sign out</a>`;
+        const uEsc = String(me.username).replace(/[&<>"']/g, "");
+        const rEsc = String(me.role).replace(/[&<>"']/g, "");
+        chip.innerHTML = `<span style="color:#22d3ee;font-weight:700;">USER:</span> ${uEsc} <span style="opacity:.6">(${rEsc})</span> · <a href="/logout" style="color:#22d3ee;text-decoration:none;">SIGN OUT</a>`;
         holder.appendChild(chip);
     }
     window.AEGIS_ME = me;

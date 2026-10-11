@@ -221,10 +221,10 @@
 
             <!-- Page Navigation Tabs -->
             <nav class="nav-tabs">
-                <a href="/" class="nav-tab-btn">📺 LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" class="nav-tab-btn">🔌 MODEL TEST PANEL</a>
-                <a href="/peoples" class="nav-tab-btn active">👥 PEOPLE DATABASE</a>
-                <a href="/occupants" class="nav-tab-btn">📊 OCCUPANT TIME LOGS</a>
+                <a href="/" class="nav-tab-btn">LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" class="nav-tab-btn">MODEL TEST PANEL</a>
+                <a href="/peoples" class="nav-tab-btn active">PEOPLE DATABASE</a>
+                <a href="/occupants" class="nav-tab-btn">OCCUPANT TIME LOGS</a>
             </nav>
         </div>
 
@@ -250,8 +250,8 @@
             </div>
 
             <div style="display:flex; align-items:center; gap:12px;">
-                <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search by name, code, department..." style="width:260px;" onkeyup="filterPeoples()">
-                <button class="btn btn-primary" onclick="openRegisterModal()">➕ REGISTER NEW PERSON</button>
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by name, code, department..." style="width:260px;" onkeyup="filterPeoples()">
+                <button class="btn btn-primary" onclick="openRegisterModal()">REGISTER NEW PERSON</button>
             </div>
         </div>
 
@@ -361,9 +361,9 @@
 
         function reportBadges(r) {
             if (!r) return '';
-            const body = r.body_kind === 'full' ? badge(true, '🧍 full body') : r.body_kind === 'half' ? badge(true, '🧍 upper/seated body')
-                       : r.body_kind === 'whole' ? badge(true, '🧍 whole image') : r.body_kind === 'closeup' ? badge(false, '🧍 close-up (no body)') : badge(false, '🧍 no body');
-            const face = r.face_usable ? badge(true, `🙂 face ${r.face_px}px`) : badge(false, r.face_found ? `🙂 face too small (${r.face_px}px)` : '🙂 no face');
+            const body = r.body_kind === 'full' ? badge(true, 'FULL BODY') : r.body_kind === 'half' ? badge(true, 'UPPER/SEATED BODY')
+                       : r.body_kind === 'whole' ? badge(true, 'WHOLE IMAGE') : r.body_kind === 'closeup' ? badge(false, 'CLOSE-UP (NO BODY)') : badge(false, 'NO BODY');
+            const face = r.face_usable ? badge(true, `FACE ${r.face_px}PX`) : badge(false, r.face_found ? `FACE TOO SMALL (${r.face_px}PX)` : 'NO FACE');
             return face + body;
         }
 
@@ -372,9 +372,9 @@
             const saved = savedPhotos.map(p => `
                 <div style="background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:6px;">
                     ${p.photo_b64 ? `<img src="${p.photo_b64}" style="width:100%;height:110px;object-fit:cover;border-radius:6px;">`
-                                  : `<div style="height:110px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#050810;border-radius:6px;">${p.kind === 'auto' ? '🤖' : '📹'}</div>`}
-                    <div>${p.has_face ? badge(true, '🙂 face') : ''}${p.body_views ? badge(true, `🧍 ${p.body_views} view${p.body_views > 1 ? 's' : ''}`) : ''}
-                         ${p.kind === 'live' ? badge(true, '📹 from live camera') : p.kind === 'auto' ? badge(true, '🤖 auto-learned') : ''}</div>
+                                  : `<div style="height:110px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--cyan);font-family:'JetBrains Mono';font-weight:700;background:#050810;border-radius:6px;">${p.kind === 'auto' ? 'AUTO-LEARNED' : 'LIVE CAM'}</div>`}
+                    <div>${p.has_face ? badge(true, 'FACE') : ''}${p.body_views ? badge(true, `${p.body_views} VIEW${p.body_views > 1 ? 'S' : ''}`) : ''}
+                         ${p.kind === 'live' ? badge(true, 'FROM LIVE CAMERA') : p.kind === 'auto' ? badge(true, 'AUTO-LEARNED') : ''}</div>
                     <button type="button" class="btn btn-secondary" style="font-size:10px;padding:2px 8px;margin-top:4px;color:#f87171" onclick="removeSavedPhoto(${p.id})">Remove</button>
                 </div>`);
             const pending = pendingPhotos.map((p, i) => `
@@ -451,10 +451,10 @@
             }
 
             grid.innerHTML = peoples.map(p => {
-                const avatar = p.photo_b64 ? `<img src="${p.photo_b64}" class="person-avatar-img" alt="${esc(p.name)}">` : `<div class="person-avatar-placeholder">👤</div>`;
+                const avatar = p.photo_b64 ? `<img src="${p.photo_b64}" class="person-avatar-img" alt="${esc(p.name)}">` : `<div class="person-avatar-placeholder" style="display:flex;align-items:center;justify-content:center;background:#050810;color:var(--cyan);font-family:'JetBrains Mono';font-size:14px;font-weight:700;">ID</div>`;
                 const rec = recognition[String(p.id)] || { faces: 0, bodies: 0, photos: 0 };
-                const recBadges = (rec.faces ? badge(true, `🙂 ${rec.faces} face`) : badge(false, '🙂 no face')) +
-                                  (rec.bodies ? badge(true, `🧍 ${rec.bodies} body`) : badge(false, '🧍 no body')) +
+                const recBadges = (rec.faces ? badge(true, `${rec.faces} FACE`) : badge(false, 'NO FACE')) +
+                                  (rec.bodies ? badge(true, `${rec.bodies} BODY`) : badge(false, 'NO BODY')) +
                                   (!rec.faces && !rec.bodies ? '<div style="font-size:10px;color:#fbbf24;margin-top:3px;">Cannot be recognised yet: add a clearer photo.</div>' : '');
                 const genderColor = p.gender === 'Male' ? 'var(--cyan)' : (p.gender === 'Female' ? '#f472b6' : 'var(--ink-faint)');
                 
@@ -470,8 +470,8 @@
                         </div>
 
                         <div style="font-size:12px; color:var(--ink-dim); line-height:1.4;">
-                            <div>🏢 <strong>Department:</strong> ${esc(p.department || 'General')}</div>
-                            ${p.notes ? `<div style="margin-top:4px;">📝 ${esc(p.notes)}</div>` : ''}
+                            <div><strong>Department:</strong> ${esc(p.department || 'General')}</div>
+                            ${p.notes ? `<div style="margin-top:4px;"><strong>Notes:</strong> ${esc(p.notes)}</div>` : ''}
                             <div style="margin-top:6px;">${recBadges}</div>
                         </div>
 
@@ -481,10 +481,10 @@
                         </div>
 
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                            <a href="/?target=${p.person_code}" class="btn btn-secondary" style="font-size:11px; padding:4px 10px;">🎯 TARGET LOCK</a>
+                            <a href="/?target=${p.person_code}" class="btn btn-secondary" style="font-size:11px; padding:4px 10px;">TARGET LOCK</a>
                             <div style="display:flex; gap:6px;">
-                                <button onclick="editPerson(${p.id})" class="btn btn-secondary" style="font-size:11px; padding:4px 8px;">✏️ Edit</button>
-                                <button onclick="deletePerson(${p.id})" class="btn btn-secondary" style="font-size:11px; padding:4px 8px; color:#f87171;">🗑️</button>
+                                <button onclick="editPerson(${p.id})" class="btn btn-secondary" style="font-size:11px; padding:4px 8px;">Edit</button>
+                                <button onclick="deletePerson(${p.id})" class="btn btn-secondary" style="font-size:11px; padding:4px 8px; color:#f87171;" title="Delete person">Delete</button>
                             </div>
                         </div>
                     </div>

@@ -61,10 +61,10 @@
 
             <!-- Page Navigation Tabs -->
             <nav class="nav-links">
-                <a href="/" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--cyan); background:rgba(34,211,238,0.15); box-shadow:inset 0 0 0 1px rgba(34,211,238,0.35); white-space:nowrap;">📺 LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">🔌 MODEL TEST PANEL</a>
-                <a href="/peoples" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">👥 PEOPLE DATABASE</a>
-                <a href="/occupants" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">📊 OCCUPANT TIME LOGS</a>
+                <a href="/" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--cyan); background:rgba(34,211,238,0.15); box-shadow:inset 0 0 0 1px rgba(34,211,238,0.35); white-space:nowrap;">LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">MODEL TEST PANEL</a>
+                <a href="/peoples" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">PEOPLE DATABASE</a>
+                <a href="/occupants" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">OCCUPANT TIME LOGS</a>
             </nav>
         </div>
 
@@ -104,7 +104,7 @@
 
             <div style="display:flex; align-items:center; gap:12px; border-left:1px solid var(--line); padding-left:12px;">
                 <div style="text-align:center;" title="Silent Alert Enabled">
-                    <div style="color:var(--mint); font-size:14px;">🔕</div>
+                    <span class="led led-mint" style="display:inline-block; margin-bottom:2px;"></span>
                     <div class="label-micro" style="color:var(--mint);">SILENT</div>
                 </div>
                 <div style="text-align:center;" title="Camera Wall Status">
@@ -145,8 +145,8 @@
 
                 <!-- Source Switcher Tabs -->
                 <div style="display:flex; gap:4px; margin-bottom:12px; background:rgba(5,8,16,0.8); padding:3px; border-radius:6px; border:1px solid var(--line);">
-                    <button id="sourceFileTab" class="source-tab-btn active" style="flex:1;">📁 FILE UPLOAD</button>
-                    <button id="sourceRtspTab" class="source-tab-btn" style="flex:1;">📡 RTSP CAMERA</button>
+                    <button id="sourceFileTab" class="source-tab-btn active" style="flex:1;">FILE UPLOAD</button>
+                    <button id="sourceRtspTab" class="source-tab-btn" style="flex:1;">RTSP CAMERA</button>
                 </div>
 
                 <!-- File Dropzone View -->
@@ -154,7 +154,13 @@
                     <div class="file-dropzone" id="dropzone">
                         <input type="file" id="mediaInput" accept="video/*,image/*" hidden>
                         <div class="dropzone-text">
-                            <span class="upload-icon">📹</span>
+                            <span class="upload-icon" style="display:flex; justify-content:center; margin-bottom:8px;">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </span>
                             <p><strong>Click to browse</strong> or drag & drop video/image</p>
                             <span class="file-types">MP4, AVI, MOV, JPG, PNG</span>
                         </div>
@@ -178,8 +184,8 @@
                             <input type="password" id="rtspPassInput" class="form-control" value="" placeholder="camera password" autocomplete="off" style="font-family:'JetBrains Mono'; font-size:11px; width:100%; background:#050810; border:1px solid var(--line); color:#fff; padding:6px 10px; border-radius:4px;">
                         </div>
                     </div>
-                    <button id="connectRtspBtn" class="btn btn-primary" style="width:100%; margin-top:4px; font-size:11px; font-weight:700;">⚡ CONNECT RTSP LIVE STREAM</button>
-                    <button id="disconnectRtspBtn" class="btn btn-secondary hidden" style="width:100%; font-size:11px; font-weight:700; color:#fb7185; border-color:rgba(251,113,133,0.5);">⏹ DISCONNECT LIVE FEED</button>
+                    <button id="connectRtspBtn" class="btn btn-primary" style="width:100%; margin-top:4px; font-size:11px; font-weight:700;">CONNECT RTSP LIVE STREAM</button>
+                    <button id="disconnectRtspBtn" class="btn btn-secondary hidden" style="width:100%; font-size:11px; font-weight:700; color:#fb7185; border-color:rgba(251,113,133,0.5);">DISCONNECT LIVE FEED</button>
                     <div id="cameraList" class="hidden" style="display:flex; flex-direction:column; gap:6px;"></div>
                     <span id="rtspStatusLine" style="font-size:10px; color:var(--ink-dim); text-align:center;">Supports H.264/H.265 RTSP feeds via port 554. Detection keeps running when you switch pages.</span>
                 </div>
@@ -212,7 +218,7 @@
                 <div class="panel-title">
                     <div class="panel-title-left">
                         <span class="led led-mint"></span>
-                        <span>🎯 TARGET PERSON LOCK</span>
+                        <span>TARGET PERSON LOCK</span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -244,7 +250,7 @@
                     <div style="display:flex; align-items:center; gap:10px;">
                         <span class="label-micro">Direct Click-on-Image Custom Polygon Mapping</span>
                         <button type="button" id="toggleStudioBtn" class="btn btn-secondary" style="padding:3px 10px; font-size:10px; font-family:'JetBrains Mono'; font-weight:700; color:var(--cyan); border-color:rgba(34,211,238,0.4);">
-                            📐 COLLAPSE MAPPING STUDIO
+                            COLLAPSE MAPPING STUDIO
                         </button>
                     </div>
                 </div>
@@ -254,7 +260,10 @@
                     <div class="canvas-container scanlines">
                         <canvas id="partitionCanvas"></canvas>
                         <div id="canvasPlaceholder" class="canvas-placeholder">
-                            <span style="font-size:32px; margin-bottom:8px;">📹</span>
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px; opacity:0.6;">
+                                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                            </svg>
                             <span>Upload a video/image OR connect RTSP stream to map project boundaries</span>
                         </div>
                     </div>
@@ -277,7 +286,7 @@
                         </div>
 
                         <div class="dot-instructions">
-                            <p style="color:var(--cyan); font-weight:700;">💡 Custom Shape Guide:</p>
+                            <p style="color:var(--cyan); font-weight:700;">Custom Shape Guide:</p>
                             <ul>
                                 <li>Click 4 dots directly on frame (<strong style="color:#ffffff;">1, 2, 3, 4</strong>)</li>
                                 <li>Drag any dot handle to fine-tune perspective boundary</li>
@@ -285,8 +294,8 @@
                         </div>
 
                         <div class="action-buttons">
-                            <button class="btn btn-primary" id="saveShapeBtn">💾 Save Shape</button>
-                            <button class="btn btn-danger" id="clearShapesBtn">🗑️ Clear All</button>
+                            <button class="btn btn-primary" id="saveShapeBtn">Save Shape</button>
+                            <button class="btn btn-danger" id="clearShapesBtn">Clear All</button>
                         </div>
 
                         <div style="margin-top:14px;">
@@ -295,7 +304,7 @@
                         </div>
 
                         <button class="btn btn-action" id="runProcessBtn" disabled>
-                            ▶️ START AI DETECTION & SEGREGATION
+                            START AI DETECTION & SEGREGATION
                         </button>
                     </div>
                 </div>
@@ -321,38 +330,38 @@
                 <div class="metrics-grid">
                     <div class="metric-card card-male">
                         <span class="metric-val" id="metricMale">0</span>
-                        <span class="metric-lbl">👦 Male</span>
+                        <span class="metric-lbl">Male</span>
                     </div>
                     <div class="metric-card card-female">
                         <span class="metric-val" id="metricFemale">0</span>
-                        <span class="metric-lbl">👧 Female</span>
+                        <span class="metric-lbl">Female</span>
                     </div>
                     <div class="metric-card card-sitting">
                         <span class="metric-val" id="metricSitting">0</span>
-                        <span class="metric-lbl">🪑 Sitting</span>
+                        <span class="metric-lbl">Sitting</span>
                     </div>
                     <div class="metric-card card-standing">
                         <span class="metric-val" id="metricStanding">0</span>
-                        <span class="metric-lbl">🧍 Standing</span>
+                        <span class="metric-lbl">Standing</span>
                     </div>
                     <div class="metric-card card-total">
                         <span class="metric-val" id="metricTotal">0</span>
-                        <span class="metric-lbl">👥 Total People</span>
+                        <span class="metric-lbl">Total People</span>
                     </div>
                     <div class="metric-card card-objects">
                         <span class="metric-val" id="metricObjects" style="color:var(--mint);">0</span>
-                        <span class="metric-lbl">📦 YOLO Objects</span>
+                        <span class="metric-lbl">YOLO Objects</span>
                     </div>
                     <div class="metric-card card-fps">
                         <span class="metric-val" id="metricFps">0.0</span>
-                        <span class="metric-lbl">⚡ FPS</span>
+                        <span class="metric-lbl">FPS</span>
                     </div>
                 </div>
 
                 <!-- Live Non-Person Objects Breakdown Strip -->
                 <div id="objectsBreakdownStrip" class="hidden" style="margin: 10px 0 14px 0; padding: 8px 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 11px; color: var(--mint); display: flex; align-items: center; justify-content: space-between;">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span>📦 DETECTED NON-PERSON OBJECTS:</span>
+                        <span>DETECTED NON-PERSON OBJECTS:</span>
                         <div id="objectsBreakdownList" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
                     </div>
                     <span style="font-size:10px; color:var(--ink-dim);" id="objectsEngineTag">Ultralytics YOLO Multi-Object Engine</span>
@@ -363,7 +372,7 @@
                     <div style="display:flex; align-items:center; justify-content:space-between;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span class="led led-amber anim-pulse-dot"></span>
-                            <strong style="color:var(--cyan); font-size:13px;" id="targetHudTitle">🎯 TARGET LOCKED: PERSON ID #1</strong>
+                            <strong style="color:var(--cyan); font-size:13px;" id="targetHudTitle">TARGET LOCKED: PERSON ID #1</strong>
                         </div>
                         <span class="label-micro" style="color:var(--mint);" id="targetHudStatus">ACTIVE TRACKING</span>
                     </div>
@@ -428,16 +437,16 @@
                             <!-- Transport Controls -->
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <button type="button" id="btnPlayPause" class="btn" style="padding:6px 14px; font-size:12px; font-weight:700; background:var(--cyan); color:#050810;" onclick="togglePlayPause()">
-                                    ⏸️ PAUSE
+                                    PAUSE
                                 </button>
                                 <button type="button" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="skipSeconds(-5)" title="Rewind 5 seconds">
-                                    ⏪ -5s
+                                    -5s
                                 </button>
                                 <button type="button" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="skipSeconds(5)" title="Skip forward 5 seconds">
-                                    ⏩ +5s
+                                    +5s
                                 </button>
                                 <button type="button" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="restartVideo()" title="Restart video from beginning">
-                                    🔄 RESTART
+                                    RESTART
                                 </button>
                             </div>
 
@@ -445,27 +454,27 @@
                             <div style="display:flex; align-items:center; gap:4px; background:rgba(5,8,16,0.8); border:1px solid var(--line); border-radius:6px; padding:2px 4px;">
                                 <span style="font-size:10px; font-family:'JetBrains Mono'; color:var(--ink-dim); margin-right:4px; padding-left:4px;">SPEED:</span>
                                 <button type="button" id="speedBtn1" class="speed-btn active-speed" onclick="setPlaySpeed(1)">1x</button>
-                                <button type="button" id="speedBtn2" class="speed-btn" onclick="setPlaySpeed(2)">2x ⏩</button>
-                                <button type="button" id="speedBtn4" class="speed-btn" onclick="setPlaySpeed(4)">4x ⚡</button>
+                                <button type="button" id="speedBtn2" class="speed-btn" onclick="setPlaySpeed(2)">2x</button>
+                                <button type="button" id="speedBtn4" class="speed-btn" onclick="setPlaySpeed(4)">4x</button>
                             </div>
 
                             <!-- Target Focus Indicator with Show All Button -->
                             <div id="targetFilterIndicator" style="display:none; align-items:center; gap:6px; background:rgba(0,210,255,0.12); border:1px solid var(--cyan); padding:4px 10px; border-radius:6px;">
-                                <span id="targetFilterText" style="font-size:10px; font-family:'JetBrains Mono'; color:var(--cyan); font-weight:700;">🎯 FOCUS: #1</span>
+                                <span id="targetFilterText" style="font-size:10px; font-family:'JetBrains Mono'; color:var(--cyan); font-weight:700;">FOCUS: #1</span>
                                 <button type="button" onclick="lockPersonTarget('All')" style="background:transparent; border:none; color:#f87171; font-size:11px; cursor:pointer; font-weight:700; padding:0 2px;" title="Unhide other people & show all boxes">✕ Show All</button>
                             </div>
                         </div>
                     </div>
 
                     <div id="downloadContainer" class="download-container hidden">
-                        <a id="downloadBtn" class="btn btn-primary" download>📥 Download Classified Output Video (.mp4)</a>
+                        <a id="downloadBtn" class="btn btn-primary" download>Download Classified Output Video (.mp4)</a>
                     </div>
                 </div>
 
                 <!-- Live Person Crops Strip -->
                 <div id="livePersonCropsSection" class="hidden" style="margin-top:18px;">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                        <div class="label-micro" style="color:var(--cyan);">👁️ LIVE IDENTIFIED PERSONS — REAL-TIME CROP GALLERY</div>
+                        <div class="label-micro" style="color:var(--cyan);">LIVE IDENTIFIED PERSONS — REAL-TIME CROP GALLERY</div>
                         <span class="label-micro" style="color:var(--ink-dim);" id="livePersonCropCount">0 persons</span>
                     </div>
                     <div id="livePersonCropsGrid" class="live-crops-grid">

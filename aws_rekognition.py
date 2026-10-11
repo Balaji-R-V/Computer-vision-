@@ -167,7 +167,7 @@ class AWSRekognitionDetector:
             if boto3 is None:
                 self.is_connected = False
                 self.last_error = 'boto3 package is not installed. Install via pip install boto3'
-                print(f"⚠️ [AWS Rekognition] {self.last_error}", flush=True)
+                print(f"[AWS Rekognition] {self.last_error}", flush=True)
                 return False
 
             try:
@@ -194,12 +194,12 @@ class AWSRekognitionDetector:
                 self.is_connected = True
                 self.last_error = ''
                 self._ensure_collection()
-                print(f"☁️ [AWS Rekognition] Client initialized in region '{self.region}' (Collection: '{self.collection_id}')", flush=True)
+                print(f"[AWS Rekognition] Client initialized in region '{self.region}' (Collection: '{self.collection_id}')", flush=True)
                 return True
             except Exception as e:
                 self.is_connected = False
                 self.last_error = str(e)
-                print(f"⚠️ [AWS Rekognition] Credentials init notice: {e}", flush=True)
+                print(f"[AWS Rekognition] Credentials init notice: {e}", flush=True)
                 return False
 
     def _ensure_collection(self):
@@ -212,7 +212,7 @@ class AWSRekognitionDetector:
             if self.collection_id not in col_ids:
                 try:
                     self.client.create_collection(CollectionId=self.collection_id)
-                    print(f"☁️ [AWS Rekognition] Created Face Collection '{self.collection_id}'", flush=True)
+                    print(f"[AWS Rekognition] Created Face Collection '{self.collection_id}'", flush=True)
                 except Exception as e:
                     print(f"Notice creating collection: {e}")
             self.collection_ready = True
@@ -237,7 +237,7 @@ class AWSRekognitionDetector:
                         'role': row['role'],
                         'photo_b64': row.get('photo_b64', '')
                     }
-                print(f"☁️ [AWS Rekognition Engine] Loaded {len(self.db_peoples)} registered people from DB.", flush=True)
+                print(f"[AWS Rekognition Engine] Loaded {len(self.db_peoples)} registered people from DB.", flush=True)
             except Exception as e:
                 print(f"Error loading DB peoples in AWS engine: {e}", flush=True)
 
@@ -327,7 +327,7 @@ class AWSRekognitionDetector:
                     )
                     records = idx_res.get('FaceRecords', [])
                     if records:
-                        print(f"☁️ [AWS Rekognition] Indexed face in collection for Person #{person_id}", flush=True)
+                        print(f"[AWS Rekognition] Indexed face in collection for Person #{person_id}", flush=True)
             except Exception as e:
                 print(f"AWS Rekognition index_faces notice: {e}", flush=True)
 
@@ -883,7 +883,7 @@ class AWSRekognitionDetector:
                     cv2.addWeighted(overlay, 0.18, annotated, 0.82, 0, annotated)
                     cv2.polylines(annotated, [poly], True, zcolor, 2)
                     p1 = poly[0]
-                    zlbl = f"📁 {z.get('name', 'Zone')}"
+                    zlbl = f"{z.get('name', 'Zone')}"
                     cv2.putText(annotated, zlbl, (p1[0] + 6, p1[1] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, zcolor, 2)
 
         # Compute FPS

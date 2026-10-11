@@ -67,7 +67,7 @@ class HeadGenderYOLODetector:
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.half = (self.device == 'cuda')
         device_name = torch.cuda.get_device_name(0) if self.device == 'cuda' else 'CPU'
-        print(f"🚀 Detector Hardware Acceleration: Device='{self.device.upper()}' ({device_name}) | FP16 Half Precision={self.half}", flush=True)
+        print(f"[Detector] Hardware Acceleration: Device='{self.device.upper()}' ({device_name}) | FP16 Half Precision={self.half}", flush=True)
         
         # Load YOLO Models onto GPU
         print(f"Loading Ultralytics YOLO object model ({yolo_model_name}) on {self.device.upper()}...")
@@ -150,7 +150,7 @@ class HeadGenderYOLODetector:
                 dummy = np.zeros((480, 640, 3), dtype=np.uint8)
                 self.process_frame(dummy, draw_yolo_objects=False, draw_heads=False)
                 self._fps_ema = None  # Reset EMA after warmup
-                print("⚡ GPU CUDA warmup complete.", flush=True)
+                print("[Detector] GPU CUDA warmup complete.", flush=True)
             except Exception as e:
                 print(f"CUDA warmup notice: {e}")
         
@@ -867,7 +867,7 @@ class HeadGenderYOLODetector:
                         cv2.circle(annotated_frame, tuple(pt), 7, (255, 255, 255), 1)
                     
                     p1 = abs_pts[0]
-                    z_label = f"📁 {zname}" + (f" ({pcode})" if pcode else "")
+                    z_label = f"{zname}" + (f" ({pcode})" if pcode else "")
                     (tw, th), _ = cv2.getTextSize(z_label, cv2.FONT_HERSHEY_SIMPLEX, 0.55, 2)
                     banner_top = max(0, p1[1] - 26)
                     cv2.rectangle(annotated_frame, (p1[0], banner_top), (p1[0] + tw + 12, p1[1]), color, -1)
@@ -1148,7 +1148,7 @@ class HeadGenderYOLODetector:
                     reacquired = True
                     old_tid = self.locked_target_track_id
                     cand = detected_persons[best_idx]
-                    print(f"🎯 Target Lock Re-Acquired! Target #{self.locked_target_id} re-linked from Track #{old_tid} -> Track #{cand['byte_track_id']} (Sim: {best_sim:.2f})", flush=True)
+                    print(f"[Target Lock] Re-Acquired! Target #{self.locked_target_id} re-linked from Track #{old_tid} -> Track #{cand['byte_track_id']} (Sim: {best_sim:.2f})", flush=True)
 
             # 3. Update persistent target memory & state
             if locked_person_idx is not None:
@@ -1224,7 +1224,7 @@ class HeadGenderYOLODetector:
                     self._draw_target_reticle(annotated_frame, (px1, py1, px2, py2), color=(0, 210, 255), thickness=3)
                     
                     status_lbl = "TARGET RE-ACQUIRED" if reacquired else "TARGET LOCKED"
-                    tag = f"🎯 {status_lbl} [ID #{p['byte_track_id']}] | {p['gender']} ({p['g_conf']*100:.0f}%) | {p['posture']}"
+                    tag = f"[{status_lbl}] [ID #{p['byte_track_id']}] | {p['gender']} ({p['g_conf']*100:.0f}%) | {p['posture']}"
                     (tw, th), _ = cv2.getTextSize(tag, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
                     
                     if py1 >= 28:

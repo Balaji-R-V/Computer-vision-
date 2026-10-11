@@ -31,8 +31,8 @@
         <div><label><input type="checkbox" id="a_smtp_tls"> Use STARTTLS</label></div>
     </div>
     <div style="display:flex; gap:10px;">
-        <button class="btn btn-primary" id="saveAlerts">💾 SAVE ALERT SETTINGS</button>
-        <button class="btn btn-secondary" id="testAlerts">📨 SEND TEST NOTIFICATION</button>
+        <button class="btn btn-primary" id="saveAlerts">SAVE ALERT SETTINGS</button>
+        <button class="btn btn-secondary" id="testAlerts">SEND TEST NOTIFICATION</button>
     </div>
 </div>
 
@@ -48,7 +48,7 @@
         If your registration photos come from a different camera or lighting and people are not being recognised, try <b>0.66</b>, but expect more look-alike mix-ups.
         The most reliable fix is on the Occupant Time Logs page: use <b>"This is a registered person"</b> on a live occupant so the system learns them from this camera.
     </p>
-    <button class="btn btn-primary" id="saveRecognition">💾 SAVE RECOGNITION SETTINGS</button>
+    <button class="btn btn-primary" id="saveRecognition">SAVE RECOGNITION SETTINGS</button>
 </div>
 
 <div class="panel">
@@ -60,7 +60,7 @@
         <div><label>Delete presence history after (days, 0 = keep)</label><input type="number" id="p_presence_retention_days" min="0"></div>
     </div>
     <p style="color:var(--ink-dim); font-size:12px; margin:0 0 12px;">Blurring applies to new frames immediately. Face crops already stored are only removed by the retention period above. Time logs are kept.</p>
-    <button class="btn btn-primary" id="savePrivacy">💾 SAVE PRIVACY SETTINGS</button>
+    <button class="btn btn-primary" id="savePrivacy">SAVE PRIVACY SETTINGS</button>
 </div>
 
 <div class="panel">
@@ -81,8 +81,8 @@
         will run through AWS cloud APIs instead of local GPU YOLO/OpenCV models.
     </p>
     <div style="display:flex; gap:10px;">
-        <button class="btn btn-primary" id="saveAws">💾 SAVE AWS SETTINGS</button>
-        <button class="btn btn-secondary" id="testAws">☁️ TEST AWS REKOGNITION CONNECTION</button>
+        <button class="btn btn-primary" id="saveAws">SAVE AWS SETTINGS</button>
+        <button class="btn btn-secondary" id="testAws">TEST AWS REKOGNITION CONNECTION</button>
     </div>
 </div>
 {% endblock %}
@@ -145,9 +145,9 @@ document.getElementById('testAws').onclick = async () => {
     try {
         const res = await api('/api/settings/aws/test', 'POST');
         const d = res.diagnostics || {};
-        toast(`✅ AWS Connected (${d.region}) · Latency: ${d.inference_latency_ms} ms`);
+        toast(`AWS Connected (${d.region}) · Latency: ${d.inference_latency_ms} ms`);
     } catch(e) {
-        toast(`❌ AWS Error: ${e.message}`, true);
+        toast(`AWS Error: ${e.message}`, true);
     }
 };
 load();

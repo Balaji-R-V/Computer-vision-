@@ -382,7 +382,7 @@ def init_stream():
     
     detector.reset_tracks(clear_gallery=not stream_manager.all_active())
     
-    print(f"\n⚡ Init stream received for {filename}: {len(zones)} project shapes, Target Lock ID: {data.get('target_person_id')}", flush=True)
+    print(f"\n[Stream] Init stream received for {filename}: {len(zones)} project shapes, Target Lock ID: {data.get('target_person_id')}", flush=True)
     
     stream_url = f"/api/video_feed/{filename}"
     return jsonify({
@@ -667,7 +667,7 @@ def update_target(filename):
             active_stream_configs[filename]['yolo_conf'] = float(data['yolo_conf'])
         if active_stream_configs[filename].get('is_rtsp'):
             persist_rtsp_session(filename)
-        print(f"🎯 Stream controls updated dynamically for {filename}: objects={active_stream_configs[filename].get('draw_objects')}, obj_conf={active_stream_configs[filename].get('obj_conf')}", flush=True)
+        print(f"[Stream] Controls updated dynamically for {filename}: objects={active_stream_configs[filename].get('draw_objects')}, obj_conf={active_stream_configs[filename].get('obj_conf')}", flush=True)
         return jsonify({'success': True, 'target_person_id': target_person_id})
     return jsonify({'error': 'Stream config not found'}), 404
 
@@ -678,7 +678,7 @@ def video_feed(filename):
     config = active_stream_configs.get(filename, {})
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(filepath):
-        print(f"❌ video_feed error: File {filename} not found at {filepath}", flush=True)
+        print(f"[Error] video_feed: File {filename} not found at {filepath}", flush=True)
         return "Video file not found", 404
 
     def generate_mjpeg():
@@ -691,10 +691,10 @@ def video_feed(filename):
         if 0 < start_frame < total_frames - 2:
             cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
             frame_cnt = start_frame
-            print(f"\n🎬 Resuming Live MJPEG Video Feed: {filename} from Frame {start_frame}/{total_frames}", flush=True)
+            print(f"\n[Video Feed] Resuming Live MJPEG Video Feed: {filename} from Frame {start_frame}/{total_frames}", flush=True)
         else:
             frame_cnt = 0
-            print(f"\n🎬 Live MJPEG Video Feed Running: {filename} ({total_frames} frames)", flush=True)
+            print(f"\n[Video Feed] Live MJPEG Video Feed Running: {filename} ({total_frames} frames)", flush=True)
 
         last_annotated_frame = None
         last_flush = time.time()
@@ -743,7 +743,7 @@ def video_feed(filename):
                 try:
                     database.save_occupants(filename, detector.get_occupant_roster(), store_faces=app_settings.get('privacy')['store_faces'])
                 except Exception as e:
-                    print(f"⚠️ Occupant log flush failed for {filename}: {e}", flush=True)
+                    print(f"[Warning] Occupant log flush failed for {filename}: {e}", flush=True)
 
             # Run full AI detection every 2 frames for 2x faster live streaming
             if frame_cnt == 1 or frame_cnt % 2 == 0 or frame_cnt == total_frames or last_annotated_frame is None:
@@ -772,7 +772,7 @@ def video_feed(filename):
                 st = live_stream_stats.get(filename, {})
                 target_str = latest_cfg.get('target_person_id') or 'All'
                 speed_str = f"{speed}x" if speed > 1 else "1x"
-                print(f"  ▶️ [Live Feed] Frame {frame_cnt}/{total_frames} ({((frame_cnt/max(total_frames,1))*100):.1f}%) | "
+                print(f"  [Live Feed] Frame {frame_cnt}/{total_frames} ({((frame_cnt/max(total_frames,1))*100):.1f}%) | "
                       f"Speed: {speed_str} | Male: {st.get('male_count', 0)} | Female: {st.get('female_count', 0)} | "
                       f"Target Lock: {target_str}", flush=True)
 
@@ -788,7 +788,7 @@ def video_feed(filename):
             database.save_occupants(filename, detector.get_occupant_roster(), store_faces=app_settings.get('privacy')['store_faces'])
         except Exception:
             pass
-        print(f"🎉 Live Video Feed Stream Completed for {filename}\n", flush=True)
+        print(f"[Video Feed] Live Video Feed Stream Completed for {filename}\n", flush=True)
 
     return Response(generate_mjpeg(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -941,7 +941,7 @@ def process_media():
         is_image = file_ext in ['.jpg', '.jpeg', '.png', '.bmp', '.webp']
         
         if is_image:
-            print(f"📷 Processing single image: {filename}...", flush=True)
+            print(f"[Image] Processing single image: {filename}...", flush=True)
             frame = cv2.imread(filepath)
             annotated_frame, stats = detector.process_frame(
                 frame,
@@ -950,7 +950,7 @@ def process_media():
                 zones=zones
             )
             out_b64 = bgr_to_base64(annotated_frame)
-            print(f"✅ Finished image processing: {filename}", flush=True)
+            print(f"[Image] Finished image processing: {filename}", flush=True)
             return jsonify({
                 'success': True,
                 'file_type': 'image',
@@ -964,8 +964,8 @@ def process_media():
             w_v = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             h_v = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             
-            print(f"\n🎬 Starting Video Processing: {filename} ({w_v}x{h_v} @ {fps_v:.1f} FPS, Total Frames: {total_frames})", flush=True)
-            print(f"🎯 Active Project Boundaries: {len(zones)} shapes defined", flush=True)
+            print(f"\n[Video Processing] Starting Video Processing: {filename} ({w_v}x{h_v} @ {fps_v:.1f} FPS, Total Frames: {total_frames})", flush=True)
+            print(f"[Video Processing] Active Project Boundaries: {len(zones)} shapes defined", flush=True)
             
             out_filename = f"classified_{int(time.time())}.mp4"
             out_filepath = os.path.join(OUTPUT_FOLDER, out_filename)
@@ -1023,7 +1023,7 @@ def process_media():
             out_writer.release()
             
             processing_jobs[filename]['status'] = 'completed'
-            print(f"🎉 Completed Video Processing: {filename} -> Output: {out_filename}\n", flush=True)
+            print(f"[Video Processing] Completed Video Processing: {filename} -> Output: {out_filename}\n", flush=True)
             
             output_video_url = f"/static/outputs/{out_filename}"
             
@@ -1068,7 +1068,7 @@ if __name__ == '__main__':
     resume_saved_rtsp_sessions()
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5050))
-    print(f"\n🚀 Aegis-OS running on http://{host}:{port} | accounts: {'ON' if auth.auth_enabled() else 'OFF (open /setup to create the first administrator)'}\n", flush=True)
+    print(f"\n[Aegis-OS] Running on http://{host}:{port} | accounts: {'ON' if auth.auth_enabled() else 'OFF (open /setup to create the first administrator)'}\n", flush=True)
     try:
         from waitress import serve
         # Each open MJPEG viewer holds one thread, so keep headroom
