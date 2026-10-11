@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css?v=3.2.3">
+    <link rel="stylesheet" href="/static/style.css?v=3.2.4">
     <style>
         .source-tab-btn {
             padding: 6px 12px;
@@ -37,52 +37,57 @@
 </head>
 <body>
 
-    <!-- AWS Rekognition Sci-Fi Glass Header -->
+    <!-- AWS Rekognition Sci-Fi Glass Header (2-Tier Command Layout) -->
     <header class="app-header">
-        <div class="header-left">
-            <!-- Animated Radar SVG Mark -->
-            <svg width="34" height="34" viewBox="0 0 34 34" class="shrink-0">
-                <circle cx="17" cy="17" r="15.5" fill="none" stroke="#1a2540" stroke-width="1" />
-                <circle cx="17" cy="17" r="10.5" fill="none" stroke="#1a2540" stroke-width="1" stroke-dasharray="2 3" />
-                <circle cx="17" cy="17" r="5" fill="none" stroke="#22304f" stroke-width="1" />
-                <g class="anim-radar">
-                    <path d="M17 17 L17 2 A15 15 0 0 1 27.6 9.3 Z" fill="rgba(34,211,238,0.28)" />
-                    <line x1="17" y1="17" x2="17" y2="2" stroke="#22d3ee" stroke-width="1.2" />
-                </g>
-                <circle cx="17" cy="17" r="1.8" fill="#22d3ee" />
-                <circle cx="22.5" cy="12" r="1.2" fill="#f87171" class="anim-pulse-dot" />
-            </svg>
-            <div>
-                <div class="brand-title">AWS REKOGNITION<span>·SMART VIDEO ANALYTICS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
-                <div class="label-micro" style="margin-top:2px;">AI Workspace Boundary & Smart Video Analytics</div>
+        <!-- Row 1: Brand Logo & System Telemetry -->
+        <div class="header-top-bar">
+            <div class="header-left">
+                <!-- Animated Radar SVG Mark -->
+                <svg width="34" height="34" viewBox="0 0 34 34" class="shrink-0">
+                    <circle cx="17" cy="17" r="15.5" fill="none" stroke="#1a2540" stroke-width="1" />
+                    <circle cx="17" cy="17" r="10.5" fill="none" stroke="#1a2540" stroke-width="1" stroke-dasharray="2 3" />
+                    <circle cx="17" cy="17" r="5" fill="none" stroke="#22304f" stroke-width="1" />
+                    <g class="anim-radar">
+                        <path d="M17 17 L17 2 A15 15 0 0 1 27.6 9.3 Z" fill="rgba(34,211,238,0.28)" />
+                        <line x1="17" y1="17" x2="17" y2="2" stroke="#22d3ee" stroke-width="1.2" />
+                    </g>
+                    <circle cx="17" cy="17" r="1.8" fill="#22d3ee" />
+                    <circle cx="22.5" cy="12" r="1.2" fill="#f87171" class="anim-pulse-dot" />
+                </svg>
+                <div>
+                    <div class="brand-title">AWS REKOGNITION<span>·SMART VIDEO ANALYTICS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
+                    <div class="label-micro" style="margin-top:2px;">AI Workspace Boundary & Smart Video Analytics</div>
+                </div>
+            </div>
+
+            <!-- Header Right: Clock & System Telemetry Status -->
+            <div class="header-right">
+                <div class="hud-clock">
+                    <div class="clock-val" id="hudClock">15:35:42</div>
+                    <div class="label-micro">PERIMETER ARMED</div>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:10px; border-left:1px solid var(--line); padding-left:10px;">
+                    <div style="text-align:center;" title="Silent Alert Enabled">
+                        <span class="led led-mint" style="display:inline-block; margin-bottom:2px;"></span>
+                        <div class="label-micro" style="color:var(--mint);">SILENT</div>
+                    </div>
+                    <div style="text-align:center;" title="Camera Wall Status">
+                        <div style="color:var(--cyan); font-size:11px; font-weight:700; font-family:'JetBrains Mono';" id="streamStatusBadge">ONLINE</div>
+                        <div class="label-micro" style="color:var(--cyan);">RTSP</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Center: Spacious Single-Row Navigation Bar -->
-        <nav class="nav-links">
-            <a href="/" class="active">LIVE STUDIO</a>
-            <a href="/test_connection">CLOUD TEST</a>
-            <a href="/peoples">PEOPLES</a>
-            <a href="/occupants">TIME LOGS</a>
-        </nav>
-
-        <!-- Header Right: Clock & System Telemetry Status -->
-        <div class="header-right">
-            <div class="hud-clock">
-                <div class="clock-val" id="hudClock">15:35:42</div>
-                <div class="label-micro">PERIMETER ARMED</div>
-            </div>
-
-            <div style="display:flex; align-items:center; gap:10px; border-left:1px solid var(--line); padding-left:10px;">
-                <div style="text-align:center;" title="Silent Alert Enabled">
-                    <span class="led led-mint" style="display:inline-block; margin-bottom:2px;"></span>
-                    <div class="label-micro" style="color:var(--mint);">SILENT</div>
-                </div>
-                <div style="text-align:center;" title="Camera Wall Status">
-                    <div style="color:var(--cyan); font-size:11px; font-weight:700; font-family:'JetBrains Mono';" id="streamStatusBadge">ONLINE</div>
-                    <div class="label-micro" style="color:var(--cyan);">RTSP</div>
-                </div>
-            </div>
+        <!-- Row 2: Full-Width Navigation Toolbar -->
+        <div class="header-nav-bar">
+            <nav class="nav-links">
+                <a href="/" class="active">LIVE STUDIO</a>
+                <a href="/test_connection">CLOUD TEST</a>
+                <a href="/peoples">PEOPLES</a>
+                <a href="/occupants">TIME LOGS</a>
+            </nav>
         </div>
     </header>
 
@@ -481,7 +486,7 @@
     </footer>
 
     <!-- Application Script -->
-    <script src="/static/app.js?v=3.2.3"></script>
-    <script src="/static/common.js?v=3.2.3"></script>
+    <script src="/static/app.js?v=3.2.4"></script>
+    <script src="/static/common.js?v=3.2.4"></script>
 </body>
 </html>
