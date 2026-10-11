@@ -176,20 +176,30 @@ class AWSRekognitionDetector:
             except Exception:
                 cfg = {}
 
-            access_key = cfg.get('access_key_id') or os.environ.get('AWS_ACCESS_KEY_ID', '')
-            secret_key = cfg.get('secret_access_key') or os.environ.get('AWS_SECRET_ACCESS_KEY', '')
-            region = cfg.get('region') or os.environ.get('AWS_DEFAULT_REGION', self.region) or 'ap-south-1'
-            col_id = cfg.get('collection_id') or os.environ.get('AWS_REKOGNITION_COLLECTION', self.collection_id)
+            access_key = (os.environ.get('AWS_ACCESS_KEY_ID', '') or cfg.get('access_key_id') or '').strip()
+            secret_key = (os.environ.get('AWS_SECRET_ACCESS_KEY', '') or cfg.get('secret_access_key') or '').strip()
+            region = os.environ.get('AWS_DEFAULT_REGION', '') or cfg.get('region') or self.region or 'ap-south-1'
+            col_id = os.environ.get('AWS_REKOGNITION_COLLECTION', '') or cfg.get('collection_id') or self.collection_id
 
             self.region = region
             self.collection_id = col_id
             self.device = f"AWS Cloud ({self.region})"
 
+            if (not access_key or not secret_key or
+                access_key.startswith('your_') or secret_key.startswith('your_') or
+                access_key == 'AKIAIOSFODNN7EXAMPLE'):
+                self.client = None
+                self.is_connected = False
+                self.last_error = 'AWS credentials not configured in .env'
+                print("[AWS Rekognition] AWS credentials not in .env, active on real-time neural vision", flush=True)
+                return False
+
             try:
-                kwargs = {'region_name': self.region}
-                if access_key and secret_key:
-                    kwargs['aws_access_key_id'] = access_key
-                    kwargs['aws_secret_access_key'] = secret_key
+                kwargs = {
+                    'region_name': self.region,
+                    'aws_access_key_id': access_key,
+                    'aws_secret_access_key': secret_key
+                }
 
                 self.client = boto3.client('rekognition', **kwargs)
                 self.is_connected = True
@@ -198,6 +208,7 @@ class AWSRekognitionDetector:
                 print(f"[AWS Rekognition] Client initialized in region '{self.region}' (Collection: '{self.collection_id}')", flush=True)
                 return True
             except Exception as e:
+                self.client = None
                 self.is_connected = False
                 self.last_error = str(e)
                 print(f"[AWS Rekognition] Credentials init notice: {e}", flush=True)
@@ -632,56 +643,8 @@ class AWSRekognitionDetector:
         return {'persons': persons, 'objects': objects, 'faces': faces}
 
     def _mock_detections(self, frame):
-        """Simulation fallback if AWS credentials are not configured, with realistic office objects."""
-        h, w = frame.shape[:2]
-        cx, cy = w // 2, h // 2
-        p_w, p_h = int(w * 0.18), int(h * 0.55)
-        x1 = max(0, cx - p_w // 2)
-        y1 = max(0, cy - p_h // 2)
-
-        # Desk in front
-        d_x1 = max(0, x1 - int(w * 0.12))
-        d_y1 = y1 + int(p_h * 0.50)
-        d_x2 = min(w, x1 + p_w + int(w * 0.15))
-        d_y2 = min(h, y1 + p_h + int(h * 0.12))
-
-        # Laptop on desk
-        lp_w, lp_h = int(w * 0.11), int(h * 0.14)
-        lp_x1 = x1 + int(p_w * 0.1)
-        lp_y1 = d_y1 - int(lp_h * 0.45)
-        lp_x2 = lp_x1 + lp_w
-        lp_y2 = lp_y1 + lp_h
-
-        # Chair occupied by person
-        ch_x1 = max(0, x1 - 15)
-        ch_y1 = y1 + int(p_h * 0.40)
-        ch_x2 = min(w, x1 + p_w + 15)
-        ch_y2 = min(h, y1 + p_h + 10)
-
-        # Adjacent visitor chair
-        ch2_x1 = min(w - 70, x1 + p_w + 35)
-        ch2_y1 = y1 + int(p_h * 0.45)
-        ch2_x2 = min(w, ch2_x1 + int(w * 0.12))
-        ch2_y2 = min(h, ch2_y1 + int(p_h * 0.50))
-
-        # Monitor on desk
-        mon_x1 = min(w - 60, lp_x2 + 20)
-        mon_y1 = max(0, d_y1 - int(h * 0.22))
-        mon_x2 = min(w, mon_x1 + int(w * 0.14))
-        mon_y2 = d_y1 + 10
-
-        return {
-            'persons': [{'box': (x1, y1, x1 + p_w, y1 + p_h), 'conf': 0.88}],
-            'objects': [
-                {'name': 'Chair', 'category': 'furniture', 'specificity': 10, 'box': (ch_x1, ch_y1, ch_x2, ch_y2), 'conf': 0.89},
-                {'name': 'Chair', 'category': 'furniture', 'specificity': 10, 'box': (ch2_x1, ch2_y1, ch2_x2, ch2_y2), 'conf': 0.82},
-                {'name': 'Laptop', 'category': 'electronics', 'specificity': 10, 'box': (lp_x1, lp_y1, lp_x2, lp_y2), 'conf': 0.94},
-                {'name': 'Desk', 'category': 'furniture', 'specificity': 10, 'box': (d_x1, d_y1, d_x2, d_y2), 'conf': 0.86},
-                {'name': 'Monitor', 'category': 'electronics', 'specificity': 10, 'box': (mon_x1, mon_y1, mon_x2, mon_y2), 'conf': 0.88},
-                {'name': 'Cell Phone', 'category': 'mobile', 'specificity': 10, 'box': (max(0, lp_x1 - 35), d_y1 + 10, max(0, lp_x1 - 5), d_y1 + 45), 'conf': 0.79}
-            ],
-            'faces': [{'box': (x1 + int(p_w * 0.25), y1, x1 + int(p_w * 0.75), y1 + int(p_h * 0.25)), 'gender': 'Male', 'gender_conf': 0.92}]
-        }
+        """Clean empty fallback if local detector is unavailable."""
+        return {'persons': [], 'objects': [], 'faces': []}
 
     def process_frame(self, frame, camera=None, draw_yolo_objects=True, draw_heads=True,
                       zones=None, target_person_id=None, draw_trails=False, draw_zones=False, frame_dt=0.08):

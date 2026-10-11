@@ -66,9 +66,11 @@
 <div class="panel">
     <div class="panel-title"><div class="panel-title-left"><span class="led led-amber"></span><span>AWS REKOGNITION CLOUD ENGINE</span></div></div>
     <div class="form-row">
-        <div><label>AWS Access Key ID</label><input type="text" id="aws_access_key_id" placeholder="AKIAIOSFODNN7EXAMPLE" autocomplete="off"></div>
-        <div><label>AWS Secret Access Key</label><input type="password" id="aws_secret_access_key" placeholder="••••••••••••••••••••••••••••••••" autocomplete="new-password"></div>
-        <div><label>AWS Region</label><input type="text" id="aws_region" placeholder="us-east-1"></div>
+        <div>
+            <label>AWS Credentials Storage</label>
+            <input type="text" value="Stored securely in server .env (Protected)" readonly style="background:rgba(255,255,255,0.03); color:var(--cyan); border-color:var(--cyan); cursor:default;">
+        </div>
+        <div><label>AWS Region (from .env)</label><input type="text" id="aws_region" placeholder="ap-south-1"></div>
         <div><label>Rekognition Collection ID</label><input type="text" id="aws_collection_id" placeholder="aegis-rekognition-collection"></div>
     </div>
     <div class="form-row">
@@ -76,12 +78,10 @@
         <div><label>Keyframe Cadence (seconds)</label><input type="number" id="aws_sample_interval_sec" min="0.1" max="2.0" step="0.05" placeholder="0.35"></div>
     </div>
     <p style="color:var(--ink-dim); font-size:12px; margin:0 0 12px; line-height:1.6;">
-        Configures Amazon Rekognition cloud computer vision. Secret keys are securely encrypted at rest.
-        When logging in via the <b>AWS Rekognition Service portal</b>, live video analysis and facial recognition
-        will run through AWS cloud APIs instead of local GPU YOLO/OpenCV models.
+        AWS credentials (<code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code>) are managed strictly on the server in the <code>.env</code> file for maximum enterprise security and are never exposed to the web browser.
     </p>
     <div style="display:flex; gap:10px;">
-        <button class="btn btn-primary" id="saveAws">SAVE AWS SETTINGS</button>
+        <button class="btn btn-primary" id="saveAws">SAVE ENGINE PREFERENCES</button>
         <button class="btn btn-secondary" id="testAws">TEST AWS REKOGNITION CONNECTION</button>
     </div>
 </div>
@@ -94,7 +94,7 @@ const P_NUM = ['face_retention_days','presence_retention_days'];
 const R_NUM = ['body_match_threshold','face_match_threshold'];
 const R_BOOL = ['auto_learn'];
 const P_BOOL = ['blur_faces','store_faces'];
-const AWS_FIELDS = ['access_key_id','secret_access_key','region','collection_id','min_confidence','sample_interval_sec'];
+const AWS_FIELDS = ['region','collection_id','min_confidence','sample_interval_sec'];
 
 function fill(s, prefix, text, bools) {
     text.forEach(k => document.getElementById(prefix + k).value = s[k] ?? '');

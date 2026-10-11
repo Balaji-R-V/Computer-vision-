@@ -46,9 +46,9 @@ AWS_DEFAULT_REGION=ap-south-1
 AWS_REKOGNITION_COLLECTION=aegis-rekognition-collection
 HOST=0.0.0.0
 PORT=5050
-# Enter your AWS credentials below:
-AWS_ACCESS_KEY_ID=your_access_key_here
-AWS_SECRET_ACCESS_KEY=your_secret_key_here
+# Enter your AWS credentials below (optional):
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
 EOT
     echo "[Deploy] .env initialized for Mumbai (ap-south-1) AWS Rekognition."
 fi
