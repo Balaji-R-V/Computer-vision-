@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css?v=3.2.2">
+    <link rel="stylesheet" href="/static/style.css?v=3.2.3">
     <style>
         .nav-tabs { display:flex; align-items:center; gap:4px; background:rgba(5,8,16,.8); border:1px solid var(--line); border-radius:6px; padding:3px; flex-wrap:wrap; }
         .nav-tab-btn { padding:6px 14px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono',monospace; font-weight:700; letter-spacing:.1em; text-decoration:none; color:var(--ink-faint); transition:all .2s ease; }
@@ -41,14 +41,13 @@
                 <div class="brand-title">AWS REKOGNITION<span>·SMART VIDEO ANALYTICS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
                 <div class="label-micro" style="margin-top:2px;">{% block subtitle %}{% endblock %}</div>
             </div>
-            <div class="header-divider"></div>
-            <nav class="nav-tabs">
-                <a href="/" class="nav-tab-btn">LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" class="nav-tab-btn">CLOUD TEST PANEL</a>
-                <a href="/peoples" class="nav-tab-btn">PEOPLE DATABASE</a>
-                <a href="/occupants" class="nav-tab-btn">OCCUPANT TIME LOGS</a>
-            </nav>
         </div>
+        <nav class="nav-tabs" style="margin: 0 12px;">
+            <a href="/" class="nav-tab-btn">LIVE STUDIO</a>
+            <a href="/test_connection" class="nav-tab-btn">CLOUD TEST</a>
+            <a href="/peoples" class="nav-tab-btn">PEOPLES</a>
+            <a href="/occupants" class="nav-tab-btn">TIME LOGS</a>
+        </nav>
         <div class="header-right"></div>
     </header>
 
@@ -57,7 +56,7 @@
     </main>
     <div id="toast" class="toast"></div>
 
-    <script src="/static/common.js?v=3.2.2"></script>
+    <script src="/static/common.js?v=3.2.3"></script>
     <script>
         function toast(msg, isErr) {
             const t = document.getElementById('toast');

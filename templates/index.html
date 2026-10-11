@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css?v=3.2.2">
+    <link rel="stylesheet" href="/static/style.css?v=3.2.3">
     <style>
         .source-tab-btn {
             padding: 6px 12px;
@@ -37,7 +37,7 @@
 </head>
 <body>
 
-    <!-- Aegis OS Sci-Fi Glass Header -->
+    <!-- AWS Rekognition Sci-Fi Glass Header -->
     <header class="app-header">
         <div class="header-left">
             <!-- Animated Radar SVG Mark -->
@@ -56,60 +56,31 @@
                 <div class="brand-title">AWS REKOGNITION<span>·SMART VIDEO ANALYTICS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
                 <div class="label-micro" style="margin-top:2px;">AI Workspace Boundary & Smart Video Analytics</div>
             </div>
-
-            <div class="header-divider"></div>
-
-            <!-- Page Navigation Tabs -->
-            <nav class="nav-links">
-                <a href="/" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--cyan); background:rgba(34,211,238,0.15); box-shadow:inset 0 0 0 1px rgba(34,211,238,0.35); white-space:nowrap;">LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">CLOUD TEST PANEL</a>
-                <a href="/peoples" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">PEOPLE DATABASE</a>
-                <a href="/occupants" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">OCCUPANT TIME LOGS</a>
-            </nav>
         </div>
 
-        <!-- Center Controls: Mode Toggle & Threat Gauge -->
-        <div style="display:flex; align-items:center; gap:16px;">
-            <div class="mode-switch">
-                <button class="mode-btn active" id="modeShowBtn">● SHOW MODE (LIVE)</button>
-                <button class="mode-btn" id="modeNightBtn">AFTER-HOURS WATCH</button>
-            </div>
-
-            <div class="threat-gauge">
-                <span class="led led-mint anim-pulse-dot"></span>
-                <div>
-                    <div class="label-micro">Threat Level</div>
-                    <div style="font-size:11px; font-weight:700; font-family:'JetBrains Mono'; color:var(--mint);">
-                        GUARDED <span style="font-weight:400; opacity:0.7;">38/100</span>
-                    </div>
-                </div>
-                <div class="threat-bars">
-                    <div class="threat-bar" style="height:6px; background:var(--mint);"></div>
-                    <div class="threat-bar" style="height:8px; background:var(--mint);"></div>
-                    <div class="threat-bar" style="height:10px; background:var(--mint);"></div>
-                    <div class="threat-bar" style="height:12px; background:var(--mint);"></div>
-                    <div class="threat-bar" style="height:14px; background:var(--line);"></div>
-                    <div class="threat-bar" style="height:16px; background:var(--line);"></div>
-                    <div class="threat-bar" style="height:18px; background:var(--line);"></div>
-                </div>
-            </div>
-        </div>
+        <!-- Center: Spacious Single-Row Navigation Bar -->
+        <nav class="nav-links">
+            <a href="/" class="active">LIVE STUDIO</a>
+            <a href="/test_connection">CLOUD TEST</a>
+            <a href="/peoples">PEOPLES</a>
+            <a href="/occupants">TIME LOGS</a>
+        </nav>
 
         <!-- Header Right: Clock & System Telemetry Status -->
         <div class="header-right">
             <div class="hud-clock">
                 <div class="clock-val" id="hudClock">15:35:42</div>
-                <div class="label-micro">PERIMETER ARMED · LIVE STREAM</div>
+                <div class="label-micro">PERIMETER ARMED</div>
             </div>
 
-            <div style="display:flex; align-items:center; gap:12px; border-left:1px solid var(--line); padding-left:12px;">
+            <div style="display:flex; align-items:center; gap:10px; border-left:1px solid var(--line); padding-left:10px;">
                 <div style="text-align:center;" title="Silent Alert Enabled">
                     <span class="led led-mint" style="display:inline-block; margin-bottom:2px;"></span>
                     <div class="label-micro" style="color:var(--mint);">SILENT</div>
                 </div>
                 <div style="text-align:center;" title="Camera Wall Status">
                     <div style="color:var(--cyan); font-size:11px; font-weight:700; font-family:'JetBrains Mono';" id="streamStatusBadge">ONLINE</div>
-                    <div class="label-micro" style="color:var(--cyan);">RTSP/CAM</div>
+                    <div class="label-micro" style="color:var(--cyan);">RTSP</div>
                 </div>
             </div>
         </div>
@@ -471,15 +442,9 @@
                     </div>
                 </div>
 
-                <!-- Live Person Crops Strip -->
-                <div id="livePersonCropsSection" class="hidden" style="margin-top:18px;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                        <div class="label-micro" style="color:var(--cyan);">LIVE IDENTIFIED PERSONS — REAL-TIME CROP GALLERY</div>
-                        <span class="label-micro" style="color:var(--ink-dim);" id="livePersonCropCount">0 persons</span>
-                    </div>
-                    <div id="livePersonCropsGrid" class="live-crops-grid">
-                        <!-- Person crop cards injected by JS -->
-                    </div>
+                <!-- Live Person Crops Strip (Hidden as requested) -->
+                <div id="livePersonCropsSection" style="display:none !important;">
+                    <div id="livePersonCropsGrid" class="live-crops-grid"></div>
                 </div>
 
                 <!-- Matrix Project Breakdown Table -->
@@ -516,7 +481,7 @@
     </footer>
 
     <!-- Application Script -->
-    <script src="/static/app.js?v=3.2.2"></script>
-    <script src="/static/common.js?v=3.2.2"></script>
+    <script src="/static/app.js?v=3.2.3"></script>
+    <script src="/static/common.js?v=3.2.3"></script>
 </body>
 </html>

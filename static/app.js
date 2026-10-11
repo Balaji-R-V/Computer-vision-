@@ -674,9 +674,9 @@ function renderStatsInUI(stats) {
         }
     }
 
-    // Render live person crops from current frame (all ByteTrack IDs)
-    if (stats.current_person_crops && stats.current_person_crops.length > 0) {
-        renderLivePersonCrops(stats.current_person_crops);
+    // Live person crops strip hidden for clean UI as requested
+    if (livePersonCropsSection) {
+        livePersonCropsSection.style.display = 'none';
     }
 
     // Dynamically Populate Target Person Selector Dropdown with Active Person IDs
@@ -1044,10 +1044,10 @@ window.lockPersonTarget = async function(tid) {
  * Shows ALL ByteTrack-detected persons in the current frame.
  */
 function renderLivePersonCrops(crops) {
-    if (!livePersonCropsSection || !livePersonCropsGrid) return;
-
-    // Show the section
-    livePersonCropsSection.classList.remove('hidden');
+    if (livePersonCropsSection) {
+        livePersonCropsSection.style.display = 'none';
+    }
+    return;
     if (livePersonCropCount) {
         livePersonCropCount.textContent = `${crops.length} person${crops.length !== 1 ? 's' : ''} in frame`;
     }
@@ -1117,7 +1117,7 @@ function renderLivePersonCrops(crops) {
 /** Clear and hide the crops section (e.g. on new video upload) */
 function clearLivePersonCrops() {
     if (livePersonCropsGrid)    livePersonCropsGrid.innerHTML = '';
-    if (livePersonCropsSection) livePersonCropsSection.classList.add('hidden');
+    if (livePersonCropsSection) livePersonCropsSection.style.display = 'none';
     if (livePersonCropCount)    livePersonCropCount.textContent = '0 persons';
 }
 

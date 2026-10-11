@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css?v=3.2.2">
+    <link rel="stylesheet" href="/static/style.css?v=3.2.3">
     <style>
         .nav-tabs {
             display: flex;
@@ -216,17 +216,15 @@
                 <div class="brand-title">AWS REKOGNITION<span>·SMART VIDEO ANALYTICS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
                 <div class="label-micro" style="margin-top:2px;">PEOPLE DATABASE & FACIAL RE-ID REGISTRY</div>
             </div>
-
-            <div class="header-divider"></div>
-
-            <!-- Page Navigation Tabs -->
-            <nav class="nav-tabs">
-                <a href="/" class="nav-tab-btn">LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" class="nav-tab-btn">CLOUD TEST PANEL</a>
-                <a href="/peoples" class="nav-tab-btn active">PEOPLE DATABASE</a>
-                <a href="/occupants" class="nav-tab-btn">OCCUPANT TIME LOGS</a>
-            </nav>
         </div>
+
+        <!-- Center: Spacious Single-Row Navigation Bar -->
+        <nav class="nav-tabs" style="margin: 0 12px;">
+            <a href="/" class="nav-tab-btn">LIVE STUDIO</a>
+            <a href="/test_connection" class="nav-tab-btn">CLOUD TEST</a>
+            <a href="/peoples" class="nav-tab-btn active">PEOPLES</a>
+            <a href="/occupants" class="nav-tab-btn">TIME LOGS</a>
+        </nav>
 
         <div class="header-right">
             <div class="hud-clock">
@@ -587,6 +585,6 @@
         // Initialize on page load
         loadPeoples();
     </script>
-    <script src="/static/common.js?v=3.2.2"></script>
+    <script src="/static/common.js?v=3.2.3"></script>
 </body>
 </html>

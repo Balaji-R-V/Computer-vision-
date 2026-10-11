@@ -109,6 +109,45 @@ html, body {
     margin: 0 4px;
 }
 
+/* Command Center Navigation Bar */
+.nav-links, .nav-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(5, 8, 16, 0.85);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 3px 6px;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+}
+
+.nav-links a, .nav-tab-btn {
+    padding: 5px 11px !important;
+    border-radius: 5px !important;
+    font-size: 11px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-decoration: none !important;
+    color: var(--ink-faint) !important;
+    white-space: nowrap !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.nav-links a:hover, .nav-tab-btn:hover {
+    color: var(--cyan) !important;
+    background: rgba(34, 211, 238, 0.12) !important;
+}
+
+.nav-links a.active, .nav-tab-btn.active {
+    color: var(--cyan) !important;
+    background: rgba(34, 211, 238, 0.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.45) !important;
+}
+
 .venue-tag {
     font-size: 11px;
     font-weight: 600;
