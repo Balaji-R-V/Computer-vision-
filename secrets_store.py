@@ -20,7 +20,12 @@ def _get_fernet():
         return _fernet
     key = os.environ.get('AEGIS_SECRET_KEY', '').strip().encode()
     if not key:
-        if os.path.exists(KEY_FILE):
+        if os.path.isdir(KEY_FILE):
+            try:
+                os.rmdir(KEY_FILE)
+            except Exception:
+                pass
+        if os.path.isfile(KEY_FILE):
             key = open(KEY_FILE, 'rb').read().strip()
         else:
             key = Fernet.generate_key()

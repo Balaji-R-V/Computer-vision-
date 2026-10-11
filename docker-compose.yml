@@ -12,13 +12,13 @@ services:
       - PORT=5050
       - AEGIS_RETENTION_DAYS=30
       - AEGIS_ENGINE_MODE=${AEGIS_ENGINE_MODE:-aws_rekognition}
+      - AEGIS_SECRET_KEY=${AEGIS_SECRET_KEY:-oD_ofK9CrrFgcjiFpTvWv1LHepvQKs7re3zztnyPHvA=}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-ap-south-1}
       - AWS_REKOGNITION_COLLECTION=${AWS_REKOGNITION_COLLECTION:-aegis-rekognition-collection}
     volumes:
       - ./peoples.db:/app/peoples.db
-      - ./secret.key:/app/secret.key
       - ./static/uploads:/app/static/uploads
       - ./static/outputs:/app/static/outputs
       - ./logs:/app/logs
