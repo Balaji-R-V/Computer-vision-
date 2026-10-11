@@ -42,13 +42,15 @@ if [ ! -f .env ]; then
     cat <<EOT > .env
 # Aegis-OS Dual Vision Engine Deployment Config
 AEGIS_ENGINE_MODE=aws_rekognition
-AWS_DEFAULT_REGION=us-east-1
+AWS_DEFAULT_REGION=ap-south-1
 AWS_REKOGNITION_COLLECTION=aegis-rekognition-collection
-# If you have AWS credentials, enter them below (or configure via web UI at /settings):
-# AWS_ACCESS_KEY_ID=your_access_key
-# AWS_SECRET_ACCESS_KEY=your_secret_key
+HOST=0.0.0.0
+PORT=5050
+# Enter your AWS credentials below:
+AWS_ACCESS_KEY_ID=your_access_key_here
+AWS_SECRET_ACCESS_KEY=your_secret_key_here
 EOT
-    echo "✅ .env initialized (Default: aws_rekognition standalone mode)."
+    echo "✅ .env initialized for Mumbai (ap-south-1) AWS Rekognition."
 fi
 
 # 5. Build and Launch with Docker Compose

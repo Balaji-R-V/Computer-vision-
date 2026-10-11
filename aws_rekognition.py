@@ -101,7 +101,7 @@ class AWSRekognitionDetector:
     Conforms to the HeadGenderYOLODetector interface used throughout Aegis-OS.
     """
 
-    def __init__(self, region='us-east-1', collection_id='aegis-rekognition-collection',
+    def __init__(self, region='ap-south-1', collection_id='aegis-rekognition-collection',
                  min_confidence=50.0, sample_interval_sec=0.35):
         self.region = region
         self.collection_id = collection_id
@@ -177,7 +177,7 @@ class AWSRekognitionDetector:
 
             access_key = cfg.get('access_key_id') or os.environ.get('AWS_ACCESS_KEY_ID', '')
             secret_key = cfg.get('secret_access_key') or os.environ.get('AWS_SECRET_ACCESS_KEY', '')
-            region = cfg.get('region') or os.environ.get('AWS_DEFAULT_REGION', self.region) or 'us-east-1'
+            region = cfg.get('region') or os.environ.get('AWS_DEFAULT_REGION', self.region) or 'ap-south-1'
             col_id = cfg.get('collection_id') or os.environ.get('AWS_REKOGNITION_COLLECTION', self.collection_id)
 
             self.region = region

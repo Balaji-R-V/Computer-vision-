@@ -31,7 +31,7 @@ DEFAULTS = {
     'aws': {
         'access_key_id': '',               # AWS Access Key ID
         'secret_access_key': '',           # AWS Secret Access Key (encrypted in database)
-        'region': 'us-east-1',             # AWS Default Region (e.g. us-east-1, eu-west-1)
+        'region': 'ap-south-1',             # AWS Default Region (Mumbai ap-south-1)
         'collection_id': 'aegis-rekognition-collection', # AWS Rekognition Collection ID
         'min_confidence': 50.0,            # Minimum detection confidence (0-100)
         'sample_interval_sec': 0.35,       # Cloud API keyframe interval (seconds)
