@@ -11,7 +11,7 @@ echo "🚀 Starting Aegis-OS GCP VM Preparation and Deployment..."
 # 1. Update package list & install system prerequisites
 echo "📦 Updating system packages..."
 sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y build-essential curl git ffmpeg libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev nginx ufw
+sudo apt-get install -y build-essential curl git ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev nginx ufw
 
 # 2. Setup 4GB Swap Space (prevents OOM memory crash when loading YOLO PyTorch models)
 if [ ! -f /swapfile ]; then
