@@ -60,11 +60,11 @@
             <div class="header-divider"></div>
 
             <!-- Page Navigation Tabs -->
-            <nav style="display:flex; align-items:center; gap:4px; background:rgba(5,8,16,0.8); border:1px solid var(--line); border-radius:6px; padding:3px;">
-                <a href="/" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--cyan); background:rgba(34,211,238,0.15); box-shadow:inset 0 0 0 1px rgba(34,211,238,0.35);">📺 LIVE COMMAND STUDIO</a>
-                <a href="/test_connection" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint);">🔌 MODEL TEST PANEL</a>
-                <a href="/peoples" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint);">👥 PEOPLE DATABASE</a>
-                <a href="/occupants" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint);">📊 OCCUPANT TIME LOGS</a>
+            <nav class="nav-links">
+                <a href="/" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--cyan); background:rgba(34,211,238,0.15); box-shadow:inset 0 0 0 1px rgba(34,211,238,0.35); white-space:nowrap;">📺 LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">🔌 MODEL TEST PANEL</a>
+                <a href="/peoples" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">👥 PEOPLE DATABASE</a>
+                <a href="/occupants" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint); white-space:nowrap;">📊 OCCUPANT TIME LOGS</a>
             </nav>
         </div>
 
@@ -468,17 +468,7 @@
                         <div class="label-micro" style="color:var(--cyan);">👁️ LIVE IDENTIFIED PERSONS — REAL-TIME CROP GALLERY</div>
                         <span class="label-micro" style="color:var(--ink-dim);" id="livePersonCropCount">0 persons</span>
                     </div>
-                    <div id="livePersonCropsGrid" style="
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 10px;
-                        max-height: 220px;
-                        overflow-y: auto;
-                        padding: 10px;
-                        background: rgba(5,8,16,0.7);
-                        border: 1px solid var(--line);
-                        border-radius: 10px;
-                    ">
+                    <div id="livePersonCropsGrid" class="live-crops-grid">
                         <!-- Person crop cards injected by JS -->
                     </div>
                 </div>

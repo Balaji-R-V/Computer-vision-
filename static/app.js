@@ -951,27 +951,27 @@ function buildCropCardHTML(p) {
         ? `border:2px solid #00d2ff; box-shadow:0 0 20px rgba(0,210,255,0.7);`
         : `border:1px solid ${accColor}44; border-top:3px solid ${accColor}; box-shadow:0 4px 16px rgba(0,0,0,0.5);`;
 
-    return `<div id="crop_card_${tid}" onclick="lockPersonTarget('${tid}')" style="
-            width:105px; flex-shrink:0; cursor:pointer;
+    return `<div id="crop_card_${tid}" onclick="lockPersonTarget('${tid}')" class="crop-card" style="
+            width:115px; flex-shrink:0; cursor:pointer;
             background:rgba(15,20,35,0.95);
             ${borderStyle}
             border-radius:8px; overflow:hidden;
             animation:cropCardIn 0.3s ease;
             transition:transform 0.15s,box-shadow 0.15s;"
-        onmouseover="this.style.transform='scale(1.08)';"
+        onmouseover="this.style.transform='scale(1.06)';"
         onmouseout="this.style.transform='scale(1)';"
         title="🎯 Click to Lock & Track Person #${tid} | ${gender} | ${posture} | ${zone}">
-        <div style="width:100%;height:90px;overflow:hidden;background:#0a0d1a;position:relative;">
+        <div class="crop-img-wrap" style="width:100%;height:100px;overflow:hidden;background:#050812;position:relative;">
             ${face_b64
-                ? `<img src="${face_b64}" style="width:100%;height:100%;object-fit:cover;" alt="#${tid}" onerror="this.style.display='none'">`
-                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:26px;color:${accColor}33;">🧑</div>`}
+                ? `<img src="${face_b64}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="#${tid}">`
+                : `<div class="crop-fallback" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:30px;color:${accColor}44;">🧑</div>`}
             <div style="position:absolute;top:4px;left:4px;background:rgba(0,0,0,0.85);border:1px solid ${accColor};
                         border-radius:3px;padding:1px 5px;font-family:'JetBrains Mono';font-size:9px;color:${accColor};font-weight:700;">
                 #${tid}
             </div>
             ${targetBadge}
         </div>
-        <div class="cc-info" style="padding:5px 6px;font-family:'JetBrains Mono';font-size:9px;line-height:1.55;">
+        <div class="cc-info" style="padding:6px 7px;font-family:'JetBrains Mono';font-size:9px;line-height:1.55;">
             <div style="color:${accColor};font-weight:700;">${gIcon} ${gender}</div>
             <div style="color:#94a3b8;">${pIcon} ${posture}</div>
             <div style="color:#64748b;font-size:8px;" title="${zone}">📁 ${zShort}</div>
@@ -1082,15 +1082,18 @@ function renderLivePersonCrops(crops) {
 
         if (existing) {
             // Update crop image if changed
-            const img = existing.querySelector('img');
-            if (p.face_b64) {
+            const imgWrap = existing.querySelector('.crop-img-wrap') || existing.querySelector('div[style*="height:90px"]') || existing.querySelector('div[style*="height:100px"]');
+            if (imgWrap && p.face_b64) {
+                let img = imgWrap.querySelector('img');
                 if (img) {
-                    img.src = p.face_b64;
+                    if (img.src !== p.face_b64) img.src = p.face_b64;
+                    img.style.display = 'block';
                 } else {
-                    const imgDiv = existing.querySelector('div[style*="height:90px"] div');
-                    if (imgDiv) existing.querySelector('div[style*="height:90px"]').insertAdjacentHTML(
+                    const fallback = imgWrap.querySelector('.crop-fallback') || imgWrap.querySelector('div:not([style*="position:absolute"])');
+                    if (fallback) fallback.remove();
+                    imgWrap.insertAdjacentHTML(
                         'afterbegin',
-                        `<img src="${p.face_b64}" style="width:100%;height:100%;object-fit:cover;" alt="#${tid}">`
+                        `<img src="${p.face_b64}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="#${tid}">`
                     );
                 }
             }
@@ -1099,7 +1102,6 @@ function renderLivePersonCrops(crops) {
             if (p.is_target) {
                 existing.style.border = '2px solid #00d2ff';
                 existing.style.boxShadow = '0 0 20px rgba(0,210,255,0.7)';
-                const imgWrap = existing.querySelector('div[style*="height:90px"]');
                 if (imgWrap && !imgWrap.querySelector('[style*="z-index:2"]')) {
                     imgWrap.insertAdjacentHTML('beforeend', `<div style="position:absolute;top:4px;right:4px;background:#00d2ff;color:#000;font-size:8px;font-weight:900;padding:1px 5px;border-radius:3px;box-shadow:0 0 10px #00d2ff;z-index:2;">🎯 LOCKED</div>`);
                 }

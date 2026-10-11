@@ -780,16 +780,35 @@ class AWSRekognitionDetector:
             occ['gender'] = gender
             occ['gender_conf'] = round(gconf, 2)
 
-            # Store face crop thumbnail if empty
-            if not occ['face_b64']:
-                crop = frame[max(0, y1):min(h_img, y2), max(0, x1):min(w_img, x2)]
-                if crop.size > 0:
-                    ch, cw = crop.shape[:2]
-                    face_h = max(20, int(ch * 0.35))
-                    fcrop = crop[:face_h, :]
-                    if fcrop.size > 0:
-                        _, fbuf = cv2.imencode('.jpg', fcrop, [cv2.IMWRITE_JPEG_QUALITY, 80])
-                        occ['face_b64'] = f"data:image/jpeg;base64,{base64.b64encode(fbuf).decode('utf-8')}"
+            # Extract real human face / head crop for Live Crop Gallery
+            face_b64 = occ.get('face_b64', '')
+            matched_face = None
+            for f in detected_faces:
+                fx1, fy1, fx2, fy2 = f['box']
+                fcx, fcy = (fx1 + fx2) // 2, (fy1 + fy2) // 2
+                if x1 <= fcx <= x2 and y1 <= fcy <= y1 + int((y2 - y1) * 0.55):
+                    matched_face = f
+                    break
+
+            if matched_face is not None:
+                fx1, fy1, fx2, fy2 = matched_face['box']
+                pad_x = int((fx2 - fx1) * 0.25)
+                pad_y = int((fy2 - fy1) * 0.25)
+                fcrop = frame[max(0, fy1 - pad_y):min(h_img, fy2 + pad_y),
+                              max(0, fx1 - pad_x):min(w_img, fx2 + pad_x)]
+            else:
+                # Top 38% of person bounding box (head, face & shoulders)
+                head_h = max(24, int((y2 - y1) * 0.38))
+                fcrop = frame[max(0, y1):min(h_img, y1 + head_h), max(0, x1):min(w_img, x2)]
+
+            if fcrop.size > 0:
+                try:
+                    ok, fbuf = cv2.imencode('.jpg', fcrop, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                    if ok:
+                        face_b64 = f"data:image/jpeg;base64,{base64.b64encode(fbuf).decode('utf-8')}"
+                        occ['face_b64'] = face_b64
+                except Exception:
+                    pass
 
             # Trails
             if draw_trails:
@@ -814,12 +833,15 @@ class AWSRekognitionDetector:
             if target_person_id is not None and str(tid) == str(target_person_id):
                 self._draw_target_reticle(annotated, (x1, y1, x2, y2))
 
+            is_tgt = bool(target_person_id is not None and str(tid) == str(target_person_id))
             person_crops.append({
                 'track_id': tid,
-                'bbox': [x1, y1, x2, y2],
+                'bbox': [int(x1), int(y1), int(x2), int(y2)],
                 'zone': assigned_zone or 'Floating',
                 'gender': gender,
-                'posture': posture
+                'posture': posture,
+                'face_b64': face_b64,
+                'is_target': is_tgt
             })
 
         # Draw Objects with Office Categorized Styling

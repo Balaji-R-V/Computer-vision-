@@ -1201,7 +1201,7 @@ class HeadGenderYOLODetector:
             current_person_crops.append({
                 'track_id': p['byte_track_id'],
                 'person_id': str(p['track_id']),
-                'face_b64': p['face_b64'],
+                'face_b64': p.get('face_b64') or self.occupant_roster.get(p['track_id'], {}).get('face_b64', ''),
                 'gender': p['gender'],
                 'gender_conf': round(float(p['g_conf']), 2),
                 'posture': p['posture'],
