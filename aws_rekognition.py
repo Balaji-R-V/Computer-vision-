@@ -27,7 +27,27 @@ except ImportError:
 
 import database
 import app_settings
-from detector import CameraState
+
+class CameraState:
+    """Per-camera tracking and session state."""
+    def __init__(self):
+        self.tracker = None
+        self.track_history = {}
+        self.occupant_roster = {}
+        self.active_track_to_person_id = {}
+        self.active_track_to_db_person = {}
+        self.gender_cache = {}
+        self.posture_history = {}
+        self._embed_frame = {}
+        self.db_state = {}
+        self.locked_target_id = None
+        self.locked_target_track_id = None
+        self.locked_target_gender = None
+        self.locked_target_last_zone = None
+        self.locked_target_face_b64 = None
+        self.locked_target_last_seen = 0
+        self.locked_target_lost_frames = 0
+        self.recent_face_crops = {}
 
 # Office Object Classification Taxonomy & Color Map for AWS Rekognition
 OFFICE_LABEL_TAXONOMY = {

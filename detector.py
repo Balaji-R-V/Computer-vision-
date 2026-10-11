@@ -4,11 +4,20 @@ import time
 import base64
 import json
 import threading
-import torch
-from ultralytics import YOLO
-from model_utils import load_gender_net, classify_gender
-from reid import PersonReID
-from face_id import FaceID, MATCH_SIM as FACE_MATCH_SIM
+try:
+    import torch
+    from ultralytics import YOLO
+    from model_utils import load_gender_net, classify_gender
+    from reid import PersonReID
+    from face_id import FaceID, MATCH_SIM as FACE_MATCH_SIM
+except ImportError:
+    torch = None
+    YOLO = None
+    load_gender_net = None
+    classify_gender = None
+    PersonReID = None
+    FaceID = None
+    FACE_MATCH_SIM = 0.40
 import database
 
 class CameraState:

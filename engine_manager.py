@@ -9,7 +9,10 @@ Provides unified polymorphic interface for server.py, stream_manager.py, and rou
 """
 import os
 import threading
-from detector import HeadGenderYOLODetector
+try:
+    from detector import HeadGenderYOLODetector
+except Exception:
+    HeadGenderYOLODetector = None
 from aws_rekognition import AWSRekognitionDetector
 
 ENGINE_GPU = 'gpu_local'

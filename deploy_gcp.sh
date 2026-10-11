@@ -54,7 +54,9 @@ EOT
 fi
 
 # 5. Build and Launch with Docker Compose
-echo "[Deploy] Building and starting Docker container..."
+echo "[Deploy] Pruning old Docker build cache to free disk space..."
+sudo docker builder prune -af || true
+echo "[Deploy] Building and starting lightweight Docker container..."
 sudo docker compose --env-file .env build
 sudo docker compose --env-file .env up -d
 
