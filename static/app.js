@@ -606,7 +606,7 @@ function renderStatsInUI(stats) {
                 `;
             }).join('');
             if (objectsEngineTag) {
-                objectsEngineTag.textContent = 'AWS Rekognition Cloud Vision (Office Object Engine)';
+                objectsEngineTag.textContent = 'IN22 Rekognition Cloud Vision (Office Object Engine)';
             }
         } else {
             objectsBreakdownStrip.classList.add('hidden');

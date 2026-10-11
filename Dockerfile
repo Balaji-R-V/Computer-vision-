@@ -8,7 +8,7 @@ ENV HOST=0.0.0.0
 ENV PORT=5050
 ENV AEGIS_ENGINE_MODE=aws_rekognition
 ENV AWS_DEFAULT_REGION=ap-south-1
-ENV AWS_REKOGNITION_COLLECTION=aegis-rekognition-collection
+ENV AWS_REKOGNITION_COLLECTION=in22-rekognition-collection
 
 # Install minimal runtime packages (ffmpeg for video decoding)
 RUN apt-get update && apt-get install -y --no-install-recommends \

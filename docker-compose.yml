@@ -16,7 +16,7 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-ap-south-1}
-      - AWS_REKOGNITION_COLLECTION=${AWS_REKOGNITION_COLLECTION:-aegis-rekognition-collection}
+      - AWS_REKOGNITION_COLLECTION=${AWS_REKOGNITION_COLLECTION:-in22-rekognition-collection}
     volumes:
       - ./peoples.db:/app/peoples.db
       - ./static/uploads:/app/static/uploads
