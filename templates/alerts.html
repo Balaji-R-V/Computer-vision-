@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Alerts{% endblock %}
+{% block subtitle %}Alerts & Event Clips{% endblock %}
+{% block content %}
+<div class="panel">
+    <div class="panel-title">
+        <div class="panel-title-left"><span class="led led-amber"></span><span>ALERT FEED</span></div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <label style="font-size:11px; color:var(--ink-dim);"><input type="checkbox" id="onlyOpen"> unacknowledged only</label>
+            <button class="btn btn-secondary" id="ackAllBtn">✔ ACKNOWLEDGE ALL</button>
+        </div>
+    </div>
+    <div id="feed"></div>
+</div>
+{% endblock %}
+{% block style %}
+.thumb { width:140px; border-radius:6px; border:1px solid var(--line); display:block; }
+.clip-link { color:var(--cyan); font-size:11px; }
+tr.acked td { opacity:.55; }
+{% endblock %}
+{% block scripts %}
+<script>
+const KIND = { camera_offline: 'Camera offline', camera_online: 'Camera online', dwell: 'Long stay', restricted_zone: 'Restricted zone' };
+async function load() {
+    const open = document.getElementById('onlyOpen').checked;
+    let data;
+    try { data = await api('/api/alerts?limit=200' + (open ? '&open=1' : '')); } catch (e) { toast(e.message, true); return; }
+    const box = document.getElementById('feed');
+    if (!data.alerts.length) { box.innerHTML = '<div class="empty">No alerts. Set up rules in Settings; events will appear here with a snapshot and a short clip.</div>'; return; }
+    box.innerHTML = `<table class="tbl"><thead><tr><th>Time</th><th>Severity</th><th>Event</th><th>Camera</th><th>Media</th><th></th></tr></thead><tbody>` +
+        data.alerts.map(a => `<tr class="${a.acknowledged ? 'acked' : ''}">
+            <td>${esc(a.ts)}</td>
+            <td><span class="pill ${esc(a.severity)}">${esc(a.severity)}</span></td>
+            <td><strong>${esc(KIND[a.kind] || a.kind)}</strong><br><span style="color:var(--ink-dim)">${esc(a.message)}</span></td>
+            <td>${esc(a.camera)}</td>
+            <td>${a.snapshot ? `<a href="${esc(a.snapshot)}" target="_blank"><img class="thumb" src="${esc(a.snapshot)}" loading="lazy"></a>` : ''}
+                ${a.clip ? `<a class="clip-link" href="${esc(a.clip)}" target="_blank">▶ view clip</a>` : (a.snapshot && a.kind !== 'camera_offline' && a.kind !== 'camera_online' && (Date.now() - Date.parse(a.ts.replace(' ', 'T'))) < 90000 ? '<span style="color:var(--ink-faint);font-size:11px">clip processing…</span>' : '')}</td>
+            <td>${a.acknowledged ? `<span style="color:var(--ink-faint);font-size:11px">ack by ${esc(a.acknowledged_by)}</span>` : `<button class="btn btn-secondary" onclick="ack(${a.id})">ACK</button>`}</td>
+        </tr>`).join('') + '</tbody></table>';
+}
+async function ack(id) { try { await api('/api/alerts/ack', 'POST', { ids: [id] }); load(); } catch (e) { toast(e.message, true); } }
+document.getElementById('ackAllBtn').onclick = async () => { try { await api('/api/alerts/ack', 'POST', { all: true }); toast('All alerts acknowledged'); load(); } catch (e) { toast(e.message, true); } };
+document.getElementById('onlyOpen').onchange = load;
+load(); setInterval(load, 10000);
+</script>
+{% endblock %}

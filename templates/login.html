@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS·OS — {{ 'First-time setup' if setup else 'Sign in' }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 20%, #0a1124 0%, #040711 100%);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            width: min(440px, 94vw);
+            background: rgba(10, 16, 32, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(34, 211, 238, 0.25);
+            border-radius: 14px;
+            padding: 30px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), 0 0 30px rgba(34, 211, 238, 0.08);
+            position: relative;
+        }
+        .card h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px;
+            margin: 0 0 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h1 span { color: var(--cyan); }
+        .card p.sub {
+            color: var(--ink-dim);
+            font-size: 12px;
+            margin: 0 0 18px;
+            line-height: 1.4;
+        }
+
+        /* Dual Engine Portal Selector */
+        .engine-picker-title {
+            font-size: 10px;
+            letter-spacing: .12em;
+            color: var(--cyan);
+            margin: 16px 0 8px;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .engine-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .engine-card {
+            border: 1px solid var(--line);
+            background: #050810;
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all .2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: left;
+        }
+        .engine-card:hover {
+            border-color: rgba(34, 211, 238, 0.4);
+            background: #080e1c;
+        }
+        .engine-card.active {
+            border-color: var(--cyan);
+            background: rgba(34, 211, 238, 0.12);
+            box-shadow: 0 0 16px rgba(34, 211, 238, 0.22);
+        }
+        .engine-card.active-aws {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.22);
+        }
+        .engine-card .eng-badge {
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .engine-card .eng-desc {
+            font-size: 10px;
+            color: var(--ink-dim);
+            line-height: 1.25;
+        }
+
+        label.field-lbl {
+            display: block;
+            font-size: 10px;
+            letter-spacing: .1em;
+            color: var(--ink-dim);
+            margin: 14px 0 5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        input.field-input {
+            width: 100%;
+            box-sizing: border-box;
+            background: #050810;
+            border: 1px solid var(--line);
+            color: #fff;
+            padding: 11px 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            transition: border-color .2s;
+        }
+        input.field-input:focus {
+            outline: none;
+            border-color: var(--cyan);
+        }
+        button.btn-submit {
+            width: 100%;
+            margin-top: 22px;
+            padding: 12px;
+            border: 0;
+            border-radius: 6px;
+            background: var(--cyan);
+            color: #001018;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: .08em;
+            cursor: pointer;
+            transition: transform .15s, box-shadow .2s;
+        }
+        button.btn-submit:hover {
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+            transform: translateY(-1px);
+        }
+        .err {
+            background: rgba(239, 68, 68, .15);
+            border: 1px solid #ef4444;
+            color: #f87171;
+            padding: 9px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        .portal-indicator {
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(34, 211, 238, 0.15);
+            color: var(--cyan);
+        }
+    </style>
+</head>
+<body>
+    <form class="card" method="post" action="{{ '/setup' if setup else '/login' }}">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <h1>AEGIS<span>·OS</span></h1>
+            <span class="portal-indicator" id="portalBadge">⚡ GPU HARDWARE</span>
+        </div>
+        <p class="sub">
+            {% if setup %}
+                First-time setup: initialize administrator account and pick your primary vision processing engine.
+            {% else %}
+                Select your vision processing engine portal and sign in to continue.
+            {% endif %}
+        </p>
+
+        {% if error %}<div class="err">{{ error }}</div>{% endif %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <input type="hidden" name="engine_mode" id="engineModeInput" value="{{ 'aws_rekognition' if requested_engine == 'aws_rekognition' else 'gpu_local' }}">
+
+        <!-- Engine Mode Selection -->
+        <div class="engine-picker-title">
+            <span>CHOOSE VISION ENGINE</span>
+            <span style="font-size:9px; color:var(--ink-faint);">DUAL ARCHITECTURE</span>
+        </div>
+        <div class="engine-grid">
+            <div class="engine-card {{ 'active' if requested_engine != 'aws_rekognition' else '' }}" id="cardGpu" onclick="selectEngine('gpu_local')">
+                <div class="eng-badge" style="color:var(--cyan);">
+                    <span>⚡</span> GPU Engine
+                </div>
+                <div class="eng-desc">Ultralytics YOLO + OpenCV CUDA/CPU local models</div>
+            </div>
+
+            <div class="engine-card {{ 'active active-aws' if requested_engine == 'aws_rekognition' else '' }}" id="cardAws" onclick="selectEngine('aws_rekognition')">
+                <div class="eng-badge" style="color:#fbbf24;">
+                    <span>☁️</span> AWS Rekognition
+                </div>
+                <div class="eng-desc">Amazon Cloud Vision AI, Face Collection & Labels</div>
+            </div>
+        </div>
+
+        <label class="field-lbl">USERNAME</label>
+        <input name="username" class="field-input" autocomplete="username" autofocus required placeholder="Enter username...">
+
+        <label class="field-lbl">PASSWORD{% if setup %} (MIN 8 CHARACTERS){% endif %}</label>
+        <input name="password" class="field-input" type="password" autocomplete="{{ 'new-password' if setup else 'current-password' }}" required placeholder="••••••••">
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+            {% if setup %}CREATE ADMINISTRATOR & LAUNCH{% else %}SIGN IN TO ENGINE PORTAL{% endif %}
+        </button>
+    </form>
+
+    <script>
+        function selectEngine(mode) {
+            const input = document.getElementById('engineModeInput');
+            const cardGpu = document.getElementById('cardGpu');
+            const cardAws = document.getElementById('cardAws');
+            const portalBadge = document.getElementById('portalBadge');
+            const submitBtn = document.getElementById('submitBtn');
+
+            input.value = mode;
+
+            if (mode === 'aws_rekognition') {
+                cardAws.className = 'engine-card active active-aws';
+                cardGpu.className = 'engine-card';
+                portalBadge.innerText = '☁️ AWS REKOGNITION';
+                portalBadge.style.color = '#fbbf24';
+                portalBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+                submitBtn.style.background = '#f59e0b';
+            } else {
+                cardGpu.className = 'engine-card active';
+                cardAws.className = 'engine-card';
+                portalBadge.innerText = '⚡ GPU HARDWARE';
+                portalBadge.style.color = 'var(--cyan)';
+                portalBadge.style.background = 'rgba(34, 211, 238, 0.15)';
+                submitBtn.style.background = 'var(--cyan)';
+            }
+        }
+
+        // Initialize from requested_engine
+        const initialEngine = "{{ requested_engine }}";
+        if (initialEngine === 'aws_rekognition') {
+            selectEngine('aws_rekognition');
+        } else {
+            selectEngine('gpu_local');
+        }
+    </script>
+</body>
+</html>

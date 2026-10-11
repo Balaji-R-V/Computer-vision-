@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# Logs & temporary files
+*.log
+logs/
+!logs/.gitkeep
+
+# Uploads and processed outputs
+static/uploads/*
+!static/uploads/.gitkeep
+static/outputs/*
+!static/outputs/.gitkeep
+
+# Sensitive database and master encryption key
+secret.key
+# Note: Keep database template or exclude runtime database
+*.db-journal
+
+# Operating System files
+Thumbs.db
+.DS_Store

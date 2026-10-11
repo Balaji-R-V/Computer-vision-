@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block subtitle %}Daily & Weekly Occupancy Reports{% endblock %}
+{% block content %}
+<div class="panel">
+    <div class="panel-title">
+        <div class="panel-title-left"><span class="led led-cyan"></span><span>REPORT PERIOD</span></div>
+        <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" data-range="0">TODAY</button>
+            <button class="btn btn-secondary" data-range="6">LAST 7 DAYS</button>
+            <button class="btn btn-secondary" data-range="29">LAST 30 DAYS</button>
+        </div>
+    </div>
+    <div class="form-row" style="align-items:end;">
+        <div><label>From</label><input type="date" id="start"></div>
+        <div><label>To</label><input type="date" id="end"></div>
+        <div><label>Camera</label><select id="camera"><option value="">All cameras</option></select></div>
+        <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary" id="runBtn">RUN REPORT</button>
+            <button class="btn btn-secondary" id="csvBtn">⬇ CSV</button>
+        </div>
+    </div>
+</div>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-mint"></span><span>OCCUPANCY BY HOUR OF DAY</span></div><span class="label-micro">AVERAGE (BAR) · PEAK (MARK)</span></div>
+    <canvas id="hourly" height="240" style="width:100%"></canvas>
+</div>
+
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-amber"></span><span>PERSON-HOURS PER DAY</span></div></div>
+    <canvas id="daily" height="220" style="width:100%"></canvas>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); gap:20px;">
+    <div class="panel">
+        <div class="panel-title"><div class="panel-title-left"><span class="led led-cyan"></span><span>TIME PER ZONE</span></div></div>
+        <div id="zones"></div>
+    </div>
+    <div class="panel">
+        <div class="panel-title"><div class="panel-title-left"><span class="led led-amber"></span><span>LONGEST PRESENCE</span></div></div>
+        <div id="people"></div>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-mint"></span><span>WHERE PEOPLE SPEND TIME (HEATMAP)</span></div></div>
+    <div style="position:relative; max-width:900px;">
+        <canvas id="heat" width="640" height="360" style="width:100%; border:1px solid var(--line); border-radius:8px; background:#050810;"></canvas>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const $ = id => document.getElementById(id);
+const iso = d => d.toISOString().slice(0, 10);
+function setRange(daysBack) { const e = new Date(), s = new Date(); s.setDate(s.getDate() - daysBack); $('start').value = iso(s); $('end').value = iso(e); }
+document.querySelectorAll('[data-range]').forEach(b => b.onclick = () => { setRange(+b.dataset.range); run(); });
+const params = () => `start=${$('start').value}&end=${$('end').value}&camera=${encodeURIComponent($('camera').value)}`;
+const fmtHours = h => h >= 1 ? `${h.toFixed(1)} h` : `${Math.round(h * 60)} min`;
+const fmtSec = s => s >= 3600 ? `${(s / 3600).toFixed(1)} h` : `${Math.round(s / 60)} min`;
+
+function cssSize(c) { const r = c.getBoundingClientRect(); c.width = Math.max(300, Math.round(r.width * (window.devicePixelRatio || 1))); c.height = Math.round(+c.getAttribute('height') * (window.devicePixelRatio || 1)); return c.getContext('2d'); }
+
+function bars(canvas, labels, values, marks, color) {
+    const ctx = cssSize(canvas), W = canvas.width, H = canvas.height, pad = { l: 44, r: 12, t: 12, b: 28 };
+    ctx.clearRect(0, 0, W, H);
+    ctx.font = `${11 * (window.devicePixelRatio || 1)}px JetBrains Mono, monospace`;
+    if (!values.length) { ctx.fillStyle = '#8494ad'; ctx.fillText('No data for this period yet', pad.l, H / 2); return; }
+    const max = Math.max(1, ...values, ...(marks || [0])) * 1.1, pw = W - pad.l - pad.r, ph = H - pad.t - pad.b, bw = pw / values.length;
+    ctx.strokeStyle = '#1a2540'; ctx.fillStyle = '#8494ad';
+    for (let i = 0; i <= 4; i++) { const y = pad.t + ph - (ph * i / 4); ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke(); ctx.fillText((max * i / 4).toFixed(max < 5 ? 1 : 0), 4, y + 4); }
+    values.forEach((v, i) => {
+        const x = pad.l + i * bw + bw * 0.15, h = ph * v / max;
+        ctx.fillStyle = color; ctx.fillRect(x, pad.t + ph - h, bw * 0.7, h);
+        if (marks) { ctx.fillStyle = '#f59e0b'; ctx.fillRect(x - 2, pad.t + ph - ph * marks[i] / max - 2, bw * 0.7 + 4, 3); }
+        ctx.fillStyle = '#8494ad'; if (values.length <= 24 || i % Math.ceil(values.length / 24) === 0) ctx.fillText(labels[i], x, H - 8);
+    });
+}
+
+function heat(canvas, hm) {
+    const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const draw = () => {
+        if (!hm.grid.length) { ctx.fillStyle = '#8494ad'; ctx.font = '14px JetBrains Mono, monospace'; ctx.fillText('No movement data for this period yet', 20, H / 2); return; }
+        const max = Math.max(...hm.grid) || 1, cw = W / hm.cols, ch = H / hm.rows;
+        hm.grid.forEach((v, i) => {
+            if (!v) return; const t = Math.sqrt(v / max);
+            ctx.fillStyle = `rgba(${Math.round(255 * t)}, ${Math.round(210 * (1 - Math.abs(t - .5) * 1.4))}, ${Math.round(255 * (1 - t))}, ${0.15 + 0.6 * t})`;
+            ctx.fillRect((i % hm.cols) * cw, Math.floor(i / hm.cols) * ch, cw + 1, ch + 1);
+        });
+    };
+    if (hm.ref_image) { const img = new Image(); img.onload = () => { ctx.drawImage(img, 0, 0, W, H); draw(); }; img.onerror = draw; img.src = hm.ref_image; } else draw();
+}
+
+async function run() {
+    let d;
+    try { d = await api('/api/reports/summary?' + params()); } catch (e) { toast(e.message, true); return; }
+    const peak = d.hourly.reduce((m, h) => h.peak > m.peak ? h : m, { peak: 0, hour: null });
+    $('kpis').innerHTML = [
+        [d.person_hours, 'person-hours'], [d.occupants, 'occupant records'], [d.sessions, 'monitoring sessions'],
+        [peak.hour === null ? '—' : `${peak.peak} @ ${String(peak.hour).padStart(2, '0')}:00`, 'peak occupancy'],
+    ].map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+    const hours = [...Array(24).keys()], byH = Object.fromEntries(d.hourly.map(h => [h.hour, h]));
+    bars($('hourly'), hours.map(h => String(h).padStart(2, '0')), hours.map(h => byH[h]?.avg || 0), hours.map(h => byH[h]?.peak || 0), '#22d3ee');
+    bars($('daily'), d.daily.map(x => x.day.slice(5)), d.daily.map(x => x.person_hours), null, '#34d399');
+    $('zones').innerHTML = d.zones.length ? `<table class="tbl"><thead><tr><th>Zone</th><th>Time</th></tr></thead><tbody>${d.zones.map(z => `<tr><td>${esc(z.zone)}</td><td>${fmtSec(z.minutes * 60)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No zone time recorded in this period.</div>';
+    $('people').innerHTML = d.top_people.length ? `<table class="tbl"><thead><tr><th>Occupant</th><th>Gender</th><th>Time</th></tr></thead><tbody>${d.top_people.map(p => `<tr><td>${/^\d+$/.test(p.track_id) ? 'Person #' + esc(p.track_id) : esc(p.track_id)} <span style="color:var(--ink-faint)">· ${esc(p.session.slice(-6))}</span></td><td>${esc(p.gender)}</td><td>${fmtSec(p.seconds)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No occupants recorded in this period.</div>';
+    heat($('heat'), d.heatmap);
+}
+$('runBtn').onclick = run;
+$('csvBtn').onclick = () => location.href = '/api/reports/export.csv?' + params();
+(async () => {
+    try {
+        const s = await api('/api/occupants_data'); const seen = new Set();
+        s.sessions.forEach(x => { if (x.source && !seen.has(x.source)) { seen.add(x.source); $('camera').insertAdjacentHTML('beforeend', `<option value="${esc(x.source)}">${esc(x.source)}</option>`); } });
+    } catch (e) {}
+    setRange(6); run();
+})();
+window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(run, 250); });
+</script>
+{% endblock %}

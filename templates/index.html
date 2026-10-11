@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS·OS — AI Virtual Boundary & RTSP Stream Command Studio</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .source-tab-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background: transparent;
+            color: var(--ink-faint);
+            transition: all 0.2s ease;
+        }
+
+        .source-tab-btn.active {
+            background: rgba(34, 211, 238, 0.15);
+            color: var(--cyan);
+            border-color: rgba(34, 211, 238, 0.35);
+        }
+
+        @keyframes cropCardIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.92); }
+            to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Aegis OS Sci-Fi Glass Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <!-- Animated Radar SVG Mark -->
+            <svg width="34" height="34" viewBox="0 0 34 34" class="shrink-0">
+                <circle cx="17" cy="17" r="15.5" fill="none" stroke="#1a2540" stroke-width="1" />
+                <circle cx="17" cy="17" r="10.5" fill="none" stroke="#1a2540" stroke-width="1" stroke-dasharray="2 3" />
+                <circle cx="17" cy="17" r="5" fill="none" stroke="#22304f" stroke-width="1" />
+                <g class="anim-radar">
+                    <path d="M17 17 L17 2 A15 15 0 0 1 27.6 9.3 Z" fill="rgba(34,211,238,0.28)" />
+                    <line x1="17" y1="17" x2="17" y2="2" stroke="#22d3ee" stroke-width="1.2" />
+                </g>
+                <circle cx="17" cy="17" r="1.8" fill="#22d3ee" />
+                <circle cx="22.5" cy="12" r="1.2" fill="#f87171" class="anim-pulse-dot" />
+            </svg>
+            <div>
+                <div class="brand-title">AEGIS<span>·OS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
+                <div class="label-micro" style="margin-top:2px;">AI Project Virtual Boundary & RTSP Command</div>
+            </div>
+
+            <div class="header-divider"></div>
+
+            <!-- Page Navigation Tabs -->
+            <nav style="display:flex; align-items:center; gap:4px; background:rgba(5,8,16,0.8); border:1px solid var(--line); border-radius:6px; padding:3px;">
+                <a href="/" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--cyan); background:rgba(34,211,238,0.15); box-shadow:inset 0 0 0 1px rgba(34,211,238,0.35);">📺 LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint);">🔌 MODEL TEST PANEL</a>
+                <a href="/peoples" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint);">👥 PEOPLE DATABASE</a>
+                <a href="/occupants" style="padding:6px 12px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono'; font-weight:700; text-decoration:none; color:var(--ink-faint);">📊 OCCUPANT TIME LOGS</a>
+            </nav>
+        </div>
+
+        <!-- Center Controls: Mode Toggle & Threat Gauge -->
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div class="mode-switch">
+                <button class="mode-btn active" id="modeShowBtn">● SHOW MODE (LIVE)</button>
+                <button class="mode-btn" id="modeNightBtn">AFTER-HOURS WATCH</button>
+            </div>
+
+            <div class="threat-gauge">
+                <span class="led led-mint anim-pulse-dot"></span>
+                <div>
+                    <div class="label-micro">Threat Level</div>
+                    <div style="font-size:11px; font-weight:700; font-family:'JetBrains Mono'; color:var(--mint);">
+                        GUARDED <span style="font-weight:400; opacity:0.7;">38/100</span>
+                    </div>
+                </div>
+                <div class="threat-bars">
+                    <div class="threat-bar" style="height:6px; background:var(--mint);"></div>
+                    <div class="threat-bar" style="height:8px; background:var(--mint);"></div>
+                    <div class="threat-bar" style="height:10px; background:var(--mint);"></div>
+                    <div class="threat-bar" style="height:12px; background:var(--mint);"></div>
+                    <div class="threat-bar" style="height:14px; background:var(--line);"></div>
+                    <div class="threat-bar" style="height:16px; background:var(--line);"></div>
+                    <div class="threat-bar" style="height:18px; background:var(--line);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header Right: Clock & System Telemetry Status -->
+        <div class="header-right">
+            <div class="hud-clock">
+                <div class="clock-val" id="hudClock">15:35:42</div>
+                <div class="label-micro">PERIMETER ARMED · LIVE STREAM</div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px; border-left:1px solid var(--line); padding-left:12px;">
+                <div style="text-align:center;" title="Silent Alert Enabled">
+                    <div style="color:var(--mint); font-size:14px;">🔕</div>
+                    <div class="label-micro" style="color:var(--mint);">SILENT</div>
+                </div>
+                <div style="text-align:center;" title="Camera Wall Status">
+                    <div style="color:var(--cyan); font-size:11px; font-weight:700; font-family:'JetBrains Mono';" id="streamStatusBadge">ONLINE</div>
+                    <div class="label-micro" style="color:var(--cyan);">RTSP/CAM</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sci-Fi Telemetry Ticker Strip -->
+    <div class="ticker-container">
+        <div class="ticker-track">
+            <div class="ticker-item"><span class="led led-mint"></span> <span>RTSP STREAM TARGET: rtsp://192.168.1.2:554/Streaming/Channels/401</span></div>
+            <div class="ticker-item"><span class="led led-cyan"></span> <span>MODEL: ULTRALYTICS YOLOv8 POSENET + GENDER CLASSIFIER + FACIAL RE-ID</span></div>
+            <div class="ticker-item"><span class="led led-amber"></span> <span>PEOPLE DATABASE: SQLITE RE-ID EMBEDDING MATCHING ACTIVE</span></div>
+            <div class="ticker-item"><span class="led led-mint"></span> <span>BOUNDARY ENGINE: 4-DOT CUSTOM PERSPECTIVE POLYGON TEST</span></div>
+            <div class="ticker-item"><span class="led led-cyan"></span> <span>AUTH: ADMIN CREDS LOADED FOR NETWORK FEED</span></div>
+            <!-- Duplicate for seamless looping -->
+            <div class="ticker-item"><span class="led led-mint"></span> <span>RTSP STREAM TARGET: rtsp://192.168.1.2:554/Streaming/Channels/401</span></div>
+            <div class="ticker-item"><span class="led led-cyan"></span> <span>MODEL: ULTRALYTICS YOLOv8 POSENET + GENDER CLASSIFIER + FACIAL RE-ID</span></div>
+        </div>
+    </div>
+
+    <!-- Main Command Layout -->
+    <div class="app-container">
+        <!-- Sidebar Controls Column -->
+        <aside class="sidebar">
+            
+            <!-- Panel 1: Input & Media Source (File vs RTSP) -->
+            <div class="panel">
+                <div class="panel-title">
+                    <div class="panel-title-left">
+                        <span class="led led-cyan"></span>
+                        <span>INPUT & MEDIA SOURCE</span>
+                    </div>
+                </div>
+
+                <!-- Source Switcher Tabs -->
+                <div style="display:flex; gap:4px; margin-bottom:12px; background:rgba(5,8,16,0.8); padding:3px; border-radius:6px; border:1px solid var(--line);">
+                    <button id="sourceFileTab" class="source-tab-btn active" style="flex:1;">📁 FILE UPLOAD</button>
+                    <button id="sourceRtspTab" class="source-tab-btn" style="flex:1;">📡 RTSP CAMERA</button>
+                </div>
+
+                <!-- File Dropzone View -->
+                <div id="fileSourceView" class="form-group">
+                    <div class="file-dropzone" id="dropzone">
+                        <input type="file" id="mediaInput" accept="video/*,image/*" hidden>
+                        <div class="dropzone-text">
+                            <span class="upload-icon">📹</span>
+                            <p><strong>Click to browse</strong> or drag & drop video/image</p>
+                            <span class="file-types">MP4, AVI, MOV, JPG, PNG</span>
+                        </div>
+                    </div>
+                    <div id="fileInfo" class="file-info hidden"></div>
+                </div>
+
+                <!-- RTSP Network Stream View -->
+                <div id="rtspSourceView" class="form-group hidden" style="display:flex; flex-direction:column; gap:10px;">
+                    <div>
+                        <label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--cyan); display:block; margin-bottom:4px;">RTSP CAMERA URL</label>
+                        <input type="text" id="rtspUrlInput" class="form-control" value="rtsp://192.168.1.2:554/Streaming/Channels/401" style="font-family:'JetBrains Mono'; font-size:11px; width:100%; background:#050810; border:1px solid var(--line); color:#fff; padding:6px 10px; border-radius:4px;">
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <div>
+                            <label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--ink-faint); display:block; margin-bottom:4px;">USERNAME</label>
+                            <input type="text" id="rtspUserInput" class="form-control" value="admin" style="font-family:'JetBrains Mono'; font-size:11px; width:100%; background:#050810; border:1px solid var(--line); color:#fff; padding:6px 10px; border-radius:4px;">
+                        </div>
+                        <div>
+                            <label style="font-size:10px; font-family:'JetBrains Mono'; color:var(--ink-faint); display:block; margin-bottom:4px;">PASSWORD</label>
+                            <input type="password" id="rtspPassInput" class="form-control" value="" placeholder="camera password" autocomplete="off" style="font-family:'JetBrains Mono'; font-size:11px; width:100%; background:#050810; border:1px solid var(--line); color:#fff; padding:6px 10px; border-radius:4px;">
+                        </div>
+                    </div>
+                    <button id="connectRtspBtn" class="btn btn-primary" style="width:100%; margin-top:4px; font-size:11px; font-weight:700;">⚡ CONNECT RTSP LIVE STREAM</button>
+                    <button id="disconnectRtspBtn" class="btn btn-secondary hidden" style="width:100%; font-size:11px; font-weight:700; color:#fb7185; border-color:rgba(251,113,133,0.5);">⏹ DISCONNECT LIVE FEED</button>
+                    <div id="cameraList" class="hidden" style="display:flex; flex-direction:column; gap:6px;"></div>
+                    <span id="rtspStatusLine" style="font-size:10px; color:var(--ink-dim); text-align:center;">Supports H.264/H.265 RTSP feeds via port 554. Detection keeps running when you switch pages.</span>
+                </div>
+            </div>
+
+            <!-- Panel 2: Detection & Confidence Sliders -->
+            <div class="panel">
+                <div class="panel-title">
+                    <div class="panel-title-left">
+                        <span class="led led-amber"></span>
+                        <span>DETECTION THRESHOLDS</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="yoloConf">PERSON CONFIDENCE <span id="yoloConfVal" style="color:var(--cyan);">0.35</span></label>
+                    <input type="range" id="yoloConf" min="0.10" max="0.90" step="0.05" value="0.35">
+                </div>
+                <div class="form-group">
+                    <label for="objConf">OBJECT CONFIDENCE (Laptops, Chairs, Phones) <span id="objConfVal" style="color:var(--mint);">0.10</span></label>
+                    <input type="range" id="objConf" min="0.05" max="0.50" step="0.01" value="0.10">
+                </div>
+                <div class="form-group">
+                    <label for="genderConf">GENDER CONFIDENCE <span id="genderConfVal" style="color:var(--cyan);">0.40</span></label>
+                    <input type="range" id="genderConf" min="0.10" max="0.90" step="0.05" value="0.40">
+                </div>
+            </div>
+
+            <!-- Panel 3: Target Person Lock & Display Overlays -->
+            <div class="panel">
+                <div class="panel-title">
+                    <div class="panel-title-left">
+                        <span class="led led-mint"></span>
+                        <span>🎯 TARGET PERSON LOCK</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="targetPersonSelect">LOCK TARGET PERSON (DB & RE-ID)</label>
+                    <select id="targetPersonSelect" style="width:100%; padding:8px 10px; background:rgba(5,8,16,0.9); border:1px solid var(--line); border-radius:6px; color:var(--cyan); font-family:'JetBrains Mono', monospace; font-size:12px; outline:none;">
+                        <option value="All">All Detected People (No Lock)</option>
+                    </select>
+                </div>
+                <div class="checkbox-group" style="margin-top:10px;">
+                    <label><input type="checkbox" id="drawTrails"> <span>Motion Trajectory Trails</span></label>
+                    <label><input type="checkbox" id="drawHeads" checked> <span>Person Bounding Boxes & Tags</span></label>
+                    <label><input type="checkbox" id="drawObjects" checked> <span>General YOLO Multi-Objects</span></label>
+                    <label><input type="checkbox" id="drawZones"> <span>Show Partition Overlay on Live Feed</span></label>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Main Studio & Analytics Workspace -->
+        <main class="main-content">
+            
+            <!-- Panel 5: Interactive 4-Point Canvas Studio -->
+            <div class="panel" id="studioSection">
+                <div class="panel-title">
+                    <div class="panel-title-left">
+                        <span class="led led-cyan"></span>
+                        <span>INTERACTIVE 4-POINT CANVAS STUDIO</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="label-micro">Direct Click-on-Image Custom Polygon Mapping</span>
+                        <button type="button" id="toggleStudioBtn" class="btn btn-secondary" style="padding:3px 10px; font-size:10px; font-family:'JetBrains Mono'; font-weight:700; color:var(--cyan); border-color:rgba(34,211,238,0.4);">
+                            📐 COLLAPSE MAPPING STUDIO
+                        </button>
+                    </div>
+                </div>
+
+                <div class="studio-grid">
+                    <!-- Canvas Drawing Area -->
+                    <div class="canvas-container scanlines">
+                        <canvas id="partitionCanvas"></canvas>
+                        <div id="canvasPlaceholder" class="canvas-placeholder">
+                            <span style="font-size:32px; margin-bottom:8px;">📹</span>
+                            <span>Upload a video/image OR connect RTSP stream to map project boundaries</span>
+                        </div>
+                    </div>
+
+                    <!-- Shape Control Form -->
+                    <div class="shape-controls">
+                        <div class="label-micro" style="margin-bottom:8px; color:var(--cyan);">CREATE SHAPE</div>
+                        
+                        <div class="form-group">
+                            <label for="projName">PROJECT NAME</label>
+                            <input type="text" id="projName" value="Project Alpha Area" placeholder="e.g. Project Alpha Area">
+                        </div>
+                        <div class="form-group">
+                            <label for="projCode">PROJECT CODE</label>
+                            <input type="text" id="projCode" value="PRJ-ALPHA" placeholder="e.g. PRJ-A">
+                        </div>
+                        <div class="form-group">
+                            <label for="projColor">COLOR PALETTE</label>
+                            <input type="color" id="projColor" value="#ff8c00">
+                        </div>
+
+                        <div class="dot-instructions">
+                            <p style="color:var(--cyan); font-weight:700;">💡 Custom Shape Guide:</p>
+                            <ul>
+                                <li>Click 4 dots directly on frame (<strong style="color:#ffffff;">1, 2, 3, 4</strong>)</li>
+                                <li>Drag any dot handle to fine-tune perspective boundary</li>
+                            </ul>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn btn-primary" id="saveShapeBtn">💾 Save Shape</button>
+                            <button class="btn btn-danger" id="clearShapesBtn">🗑️ Clear All</button>
+                        </div>
+
+                        <div style="margin-top:14px;">
+                            <div class="label-micro">ACTIVE BOUNDARIES (<span id="shapeCount" style="color:var(--cyan);">0</span>)</div>
+                            <div id="shapesListContainer" class="shapes-list"></div>
+                        </div>
+
+                        <button class="btn btn-action" id="runProcessBtn" disabled>
+                            ▶️ START AI DETECTION & SEGREGATION
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="loading-overlay hidden">
+                <div class="spinner"></div>
+                <p id="loadingText" class="font-mono" style="font-size:12px; color:var(--cyan);">Processing AI model and segregating team project areas...</p>
+            </div>
+
+            <!-- Panel 6: Live Analytics HUD & Output Stream -->
+            <div class="panel results-section hidden" id="resultsSection">
+                <div class="panel-title">
+                    <div class="panel-title-left">
+                        <span class="led led-mint"></span>
+                        <span>DETECTION & PROJECT SEGREGATION ANALYTICS</span>
+                    </div>
+                    <span class="label-micro" style="color:var(--mint);">REAL-TIME TELEMETRY</span>
+                </div>
+
+                <!-- 6 Micro Metric Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card card-male">
+                        <span class="metric-val" id="metricMale">0</span>
+                        <span class="metric-lbl">👦 Male</span>
+                    </div>
+                    <div class="metric-card card-female">
+                        <span class="metric-val" id="metricFemale">0</span>
+                        <span class="metric-lbl">👧 Female</span>
+                    </div>
+                    <div class="metric-card card-sitting">
+                        <span class="metric-val" id="metricSitting">0</span>
+                        <span class="metric-lbl">🪑 Sitting</span>
+                    </div>
+                    <div class="metric-card card-standing">
+                        <span class="metric-val" id="metricStanding">0</span>
+                        <span class="metric-lbl">🧍 Standing</span>
+                    </div>
+                    <div class="metric-card card-total">
+                        <span class="metric-val" id="metricTotal">0</span>
+                        <span class="metric-lbl">👥 Total People</span>
+                    </div>
+                    <div class="metric-card card-objects">
+                        <span class="metric-val" id="metricObjects" style="color:var(--mint);">0</span>
+                        <span class="metric-lbl">📦 YOLO Objects</span>
+                    </div>
+                    <div class="metric-card card-fps">
+                        <span class="metric-val" id="metricFps">0.0</span>
+                        <span class="metric-lbl">⚡ FPS</span>
+                    </div>
+                </div>
+
+                <!-- Live Non-Person Objects Breakdown Strip -->
+                <div id="objectsBreakdownStrip" class="hidden" style="margin: 10px 0 14px 0; padding: 8px 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; font-family: 'JetBrains Mono'; font-size: 11px; color: var(--mint); display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span>📦 DETECTED NON-PERSON OBJECTS:</span>
+                        <div id="objectsBreakdownList" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+                    </div>
+                    <span style="font-size:10px; color:var(--ink-dim);">Ultralytics YOLO Multi-Object Engine</span>
+                </div>
+
+                <!-- Target Lock Telemetry Banner -->
+                <div id="targetLockHudBanner" class="target-hud-banner hidden" style="margin:14px 0; padding:12px; background:rgba(0,210,255,0.08); border:1px solid var(--cyan); border-radius:6px; font-family:'JetBrains Mono';">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="led led-amber anim-pulse-dot"></span>
+                            <strong style="color:var(--cyan); font-size:13px;" id="targetHudTitle">🎯 TARGET LOCKED: PERSON ID #1</strong>
+                        </div>
+                        <span class="label-micro" style="color:var(--mint);" id="targetHudStatus">ACTIVE TRACKING</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:8px; font-size:11px;">
+                        <div>LOCATION: <strong id="targetHudZone" style="color:#ffffff;">-</strong></div>
+                        <div>GENDER: <strong id="targetHudGender" style="color:var(--cyan);">-</strong></div>
+                        <div>POSTURE: <strong id="targetHudPosture" style="color:var(--amber);">-</strong></div>
+                    </div>
+                </div>
+
+                <!-- Output Preview Container -->
+                <div style="margin-top:16px;">
+                    <div class="label-micro" style="margin-bottom:8px; color:var(--cyan);">CLASSIFIED OUTPUT STREAM VIEWPORT</div>
+                <div id="mediaOutputContainer" class="media-output">
+                        <!-- Video stream image placed dynamically -->
+                    </div>
+
+                    <!-- Video Playback & Fast-Forward Control Deck -->
+                    <div id="videoControlDeck" class="hidden" style="
+                        margin-top: 10px;
+                        background: rgba(10, 15, 30, 0.95);
+                        border: 1px solid var(--line);
+                        border-radius: 10px;
+                        padding: 12px 16px;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                    ">
+                        <!-- Progress Scrubber Bar -->
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                            <span id="videoCurrentTime" style="font-family:'JetBrains Mono'; font-size:11px; color:var(--cyan); min-width:44px;">0:00</span>
+                            <div id="videoProgressTrack" style="
+                                flex: 1;
+                                height: 8px;
+                                background: rgba(255,255,255,0.1);
+                                border-radius: 4px;
+                                position: relative;
+                                cursor: pointer;
+                                overflow: hidden;
+                            " title="Click anywhere to seek video frame">
+                                <div id="videoProgressBar" style="
+                                    height: 100%;
+                                    width: 0%;
+                                    background: linear-gradient(90deg, var(--cyan), var(--mint));
+                                    border-radius: 4px;
+                                    transition: width 0.1s linear;
+                                "></div>
+                            </div>
+                            <span id="videoTotalTime" style="font-family:'JetBrains Mono'; font-size:11px; color:var(--ink-dim); min-width:44px; text-align:right;">0:00</span>
+                            <span id="videoFrameBadge" style="
+                                font-family:'JetBrains Mono';
+                                font-size:10px;
+                                color:var(--amber);
+                                background:rgba(245,158,11,0.1);
+                                border:1px solid rgba(245,158,11,0.3);
+                                padding:2px 8px;
+                                border-radius:4px;
+                                white-space:nowrap;
+                            ">F: 0/0</span>
+                        </div>
+
+                        <!-- Buttons Row: Play/Pause, Speeds (1x, 2x, 4x), Skip -5s/+5s, Restart, Target Focus Reset -->
+                        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                            <!-- Transport Controls -->
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <button type="button" id="btnPlayPause" class="btn" style="padding:6px 14px; font-size:12px; font-weight:700; background:var(--cyan); color:#050810;" onclick="togglePlayPause()">
+                                    ⏸️ PAUSE
+                                </button>
+                                <button type="button" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="skipSeconds(-5)" title="Rewind 5 seconds">
+                                    ⏪ -5s
+                                </button>
+                                <button type="button" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="skipSeconds(5)" title="Skip forward 5 seconds">
+                                    ⏩ +5s
+                                </button>
+                                <button type="button" class="btn btn-secondary" style="padding:6px 10px; font-size:11px;" onclick="restartVideo()" title="Restart video from beginning">
+                                    🔄 RESTART
+                                </button>
+                            </div>
+
+                            <!-- Fast-Forward Speed Selectors -->
+                            <div style="display:flex; align-items:center; gap:4px; background:rgba(5,8,16,0.8); border:1px solid var(--line); border-radius:6px; padding:2px 4px;">
+                                <span style="font-size:10px; font-family:'JetBrains Mono'; color:var(--ink-dim); margin-right:4px; padding-left:4px;">SPEED:</span>
+                                <button type="button" id="speedBtn1" class="speed-btn active-speed" onclick="setPlaySpeed(1)">1x</button>
+                                <button type="button" id="speedBtn2" class="speed-btn" onclick="setPlaySpeed(2)">2x ⏩</button>
+                                <button type="button" id="speedBtn4" class="speed-btn" onclick="setPlaySpeed(4)">4x ⚡</button>
+                            </div>
+
+                            <!-- Target Focus Indicator with Show All Button -->
+                            <div id="targetFilterIndicator" style="display:none; align-items:center; gap:6px; background:rgba(0,210,255,0.12); border:1px solid var(--cyan); padding:4px 10px; border-radius:6px;">
+                                <span id="targetFilterText" style="font-size:10px; font-family:'JetBrains Mono'; color:var(--cyan); font-weight:700;">🎯 FOCUS: #1</span>
+                                <button type="button" onclick="lockPersonTarget('All')" style="background:transparent; border:none; color:#f87171; font-size:11px; cursor:pointer; font-weight:700; padding:0 2px;" title="Unhide other people & show all boxes">✕ Show All</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="downloadContainer" class="download-container hidden">
+                        <a id="downloadBtn" class="btn btn-primary" download>📥 Download Classified Output Video (.mp4)</a>
+                    </div>
+                </div>
+
+                <!-- Live Person Crops Strip -->
+                <div id="livePersonCropsSection" class="hidden" style="margin-top:18px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                        <div class="label-micro" style="color:var(--cyan);">👁️ LIVE IDENTIFIED PERSONS — REAL-TIME CROP GALLERY</div>
+                        <span class="label-micro" style="color:var(--ink-dim);" id="livePersonCropCount">0 persons</span>
+                    </div>
+                    <div id="livePersonCropsGrid" style="
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        max-height: 220px;
+                        overflow-y: auto;
+                        padding: 10px;
+                        background: rgba(5,8,16,0.7);
+                        border: 1px solid var(--line);
+                        border-radius: 10px;
+                    ">
+                        <!-- Person crop cards injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Matrix Project Breakdown Table -->
+                <div class="table-container">
+                    <div class="label-micro" style="margin-bottom:8px; color:var(--mint);">PROJECT-WISE PEOPLE SEGREGATION ANALYTICS MATRIX</div>
+                    <table class="analytics-table">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Code</th>
+                                <th>Occupants</th>
+                                <th>Workforce Share</th>
+                                <th>Male</th>
+                                <th>Female</th>
+                                <th>Sitting</th>
+                                <th>Standing</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analyticsTableBody">
+                            <!-- Rows populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Sci-Fi Footer -->
+    <footer style="padding:16px 20px; border-top:1px solid var(--line); margin-top:20px; text-align:center;">
+        <div class="label-micro" style="color:var(--ink-faint);">
+            AEGIS·OS v3.2 — PROFILE “BUILDING A-4” · SILENT-ALERT POLICY ACTIVE · IN-BROWSER VIRTUAL BOUNDARY & RTSP STREAM ENGINE
+        </div>
+    </footer>
+
+    <!-- Application Script -->
+    <script src="/static/app.js"></script>
+    <script src="/static/common.js"></script>
+</body>
+</html>

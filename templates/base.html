@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS·OS — {% block title %}{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .nav-tabs { display:flex; align-items:center; gap:4px; background:rgba(5,8,16,.8); border:1px solid var(--line); border-radius:6px; padding:3px; flex-wrap:wrap; }
+        .nav-tab-btn { padding:6px 14px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono',monospace; font-weight:700; letter-spacing:.1em; text-decoration:none; color:var(--ink-faint); transition:all .2s ease; }
+        .nav-tab-btn.active, .nav-tab-btn:hover { background:rgba(34,211,238,.15); color:var(--cyan); box-shadow:inset 0 0 0 1px rgba(34,211,238,.35); }
+        .page { max-width:1500px; margin:20px auto; padding:0 20px; display:grid; gap:20px; }
+        .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; }
+        .kpi { background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+        .kpi .v { font-family:'JetBrains Mono',monospace; font-size:26px; color:var(--cyan); font-weight:700; }
+        .kpi .l { font-size:10px; letter-spacing:.12em; color:var(--ink-dim); margin-top:2px; text-transform:uppercase; }
+        .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-bottom:14px; }
+        .form-row label { display:block; font-size:10px; letter-spacing:.1em; color:var(--ink-dim); margin-bottom:4px; font-family:'JetBrains Mono',monospace; text-transform:uppercase; }
+        .form-row input[type=text], .form-row input[type=password], .form-row input[type=number], .form-row input[type=date], .form-row select, .form-row textarea {
+            width:100%; background:#050810; border:1px solid var(--line); color:#fff; padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:12px; }
+        .tbl { width:100%; border-collapse:collapse; font-size:12px; }
+        .tbl th { text-align:left; font-size:10px; letter-spacing:.1em; color:var(--ink-dim); padding:8px; border-bottom:1px solid var(--line); text-transform:uppercase; }
+        .tbl td { padding:8px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+        .pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+        .pill.critical { background:rgba(239,68,68,.2); color:#f87171; }
+        .pill.warning { background:rgba(245,158,11,.2); color:#fbbf24; }
+        .pill.info { background:rgba(34,211,238,.18); color:#22d3ee; }
+        .toast { position:fixed; right:20px; bottom:20px; background:#0c1220; border:1px solid var(--cyan); padding:10px 16px; border-radius:8px; font-size:12px; display:none; z-index:50; }
+        .toast.err { border-color:#ef4444; color:#f87171; }
+        .empty { padding:36px; text-align:center; color:var(--ink-dim); font-family:'JetBrains Mono',monospace; }
+        {% block style %}{% endblock %}
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-left">
+            <div>
+                <div class="brand-title">AEGIS<span>·OS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
+                <div class="label-micro" style="margin-top:2px;">{% block subtitle %}{% endblock %}</div>
+            </div>
+            <div class="header-divider"></div>
+            <nav class="nav-tabs">
+                <a href="/" class="nav-tab-btn">📺 LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" class="nav-tab-btn">🔌 MODEL TEST PANEL</a>
+                <a href="/peoples" class="nav-tab-btn">👥 PEOPLE DATABASE</a>
+                <a href="/occupants" class="nav-tab-btn">📊 OCCUPANT TIME LOGS</a>
+            </nav>
+        </div>
+        <div class="header-right"></div>
+    </header>
+
+    <main class="page">
+        {% block content %}{% endblock %}
+    </main>
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/common.js"></script>
+    <script>
+        function toast(msg, isErr) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.className = 'toast' + (isErr ? ' err' : ''); t.style.display = 'block';
+            clearTimeout(window._toastT); window._toastT = setTimeout(() => t.style.display = 'none', 3500);
+        }
+        async function api(url, method, body) {
+            const r = await fetch(url, { method: method || 'GET', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+            let data = {}; try { data = await r.json(); } catch (e) {}
+            if (!r.ok) throw new Error(data.error || `Request failed (${r.status})`);
+            return data;
+        }
+        function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS·OS — Occupant Face & Space Time Analytics Gallery</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(5, 8, 16, 0.8);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 3px;
+        }
+
+        .nav-tab-btn {
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            color: var(--ink-faint);
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab-btn.active, .nav-tab-btn:hover {
+            background: rgba(34, 211, 238, 0.15);
+            color: var(--cyan);
+            box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.35);
+        }
+
+        /* Occupant Gallery Cards Grid */
+        .occupants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .occupant-card {
+            background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .occ-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .occ-avatar-img {
+            width: 72px;
+            height: 72px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid var(--cyan);
+            background: #050810;
+        }
+
+        .occ-avatar-placeholder {
+            width: 72px;
+            height: 72px;
+            border-radius: 8px;
+            border: 2px dashed var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: #050810;
+        }
+
+        .occ-id-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 0.08em;
+        }
+
+        /* Stacked Space Distribution Bar */
+        .space-dist-bar {
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            display: flex;
+            background: var(--line);
+            margin-top: 4px;
+        }
+
+        .space-dist-seg {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Space Time Legend */
+        .space-time-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 8px;
+            background: rgba(5, 8, 16, 0.6);
+            border-radius: 4px;
+            border: 1px solid var(--line-soft);
+        }
+
+        .timeline-list {
+            max-height: 110px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--ink-dim);
+            padding-right: 4px;
+        }
+
+        .timeline-item {
+            padding: 4px 6px;
+            background: rgba(5, 8, 16, 0.8);
+            border-left: 2px solid var(--cyan);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sci-Fi Header with Navigation Tabs -->
+    <header class="app-header">
+        <div class="header-left">
+            <!-- Animated Radar SVG Mark -->
+            <svg width="34" height="34" viewBox="0 0 34 34" class="shrink-0">
+                <circle cx="17" cy="17" r="15.5" fill="none" stroke="#1a2540" stroke-width="1" />
+                <circle cx="17" cy="17" r="10.5" fill="none" stroke="#1a2540" stroke-width="1" stroke-dasharray="2 3" />
+                <circle cx="17" cy="17" r="5" fill="none" stroke="#22304f" stroke-width="1" />
+                <g class="anim-radar">
+                    <path d="M17 17 L17 2 A15 15 0 0 1 27.6 9.3 Z" fill="rgba(34,211,238,0.28)" />
+                    <line x1="17" y1="17" x2="17" y2="2" stroke="#22d3ee" stroke-width="1.2" />
+                </g>
+                <circle cx="17" cy="17" r="1.8" fill="#22d3ee" />
+                <circle cx="22.5" cy="12" r="1.2" fill="#f87171" class="anim-pulse-dot" />
+            </svg>
+            <div>
+                <div class="brand-title">AEGIS<span>·OS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
+                <div class="label-micro" style="margin-top:2px;">Occupant Face & Space Time Analytics</div>
+            </div>
+
+            <div class="header-divider"></div>
+
+            <!-- Page Navigation Tabs -->
+            <nav class="nav-tabs">
+                <a href="/" class="nav-tab-btn">📺 LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" class="nav-tab-btn">🔌 MODEL TEST PANEL</a>
+                <a href="/peoples" class="nav-tab-btn">👥 PEOPLE DATABASE</a>
+                <a href="/occupants" class="nav-tab-btn active">📊 OCCUPANT TIME LOGS</a>
+            </nav>
+        </div>
+
+        <div class="header-right">
+            <div class="hud-clock">
+                <div class="clock-val" id="hudClock">16:15:00</div>
+                <div class="label-micro">FACE ROSTER ACTIVE</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sci-Fi Telemetry Ticker Strip -->
+    <div class="ticker-container">
+        <div class="ticker-track">
+            <div class="ticker-item"><span class="led led-mint"></span> <span>OCCUPANT ROSTER: REAL-TIME FACE CROPS & WORKSPACE TIME TRACKER</span></div>
+            <div class="ticker-item"><span class="led led-cyan"></span> <span>METRICS: SPACE DURATION (SECONDS / MINUTES), GENDER, POSTURE</span></div>
+            <div class="ticker-item"><span class="led led-amber"></span> <span>PERSISTENT TRACKING: YOLOV8 BYTETRACK RE-IDENTIFICATION</span></div>
+            <!-- Duplicate for looping -->
+            <div class="ticker-item"><span class="led led-mint"></span> <span>OCCUPANT ROSTER: REAL-TIME FACE CROPS & WORKSPACE TIME TRACKER</span></div>
+            <div class="ticker-item"><span class="led led-cyan"></span> <span>METRICS: SPACE DURATION (SECONDS / MINUTES), GENDER, POSTURE</span></div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div style="max-width:1720px; margin:20px auto; padding:0 20px;">
+        
+        <!-- Controls & Filters Bar -->
+        <div class="panel">
+            <div class="panel-title">
+                <div class="panel-title-left">
+                    <span class="led led-cyan"></span>
+                    <span>OCCUPANT GALLERY FILTERS & SEARCH</span>
+                </div>
+                <span class="label-micro" id="totalOccupantsBadge" style="color:var(--cyan);">0 OCCUPANTS TRACKED</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:14px; align-items:center; margin-bottom:14px;">
+                <div>
+                    <label class="label-micro" style="margin-bottom:4px; display:block;">MONITORING SESSION</label>
+                    <select id="sessionSelect" style="width:100%; padding:8px 12px; background:rgba(5,8,16,0.9); border:1px solid var(--line); border-radius:6px; color:var(--ink); font-family:'JetBrains Mono'; font-size:12px; outline:none;">
+                        <option value="">Current / latest session</option>
+                    </select>
+                </div>
+                <div id="sessionStatus" class="label-micro" style="color:var(--ink-dim); text-align:right;">—</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 160px; gap:14px; align-items:center;">
+                <div>
+                    <label class="label-micro" style="margin-bottom:4px; display:block;">FILTER BY WORKSPACE SPACE</label>
+                    <select id="filterSpaceSelect" style="width:100%; padding:8px 12px; background:rgba(5,8,16,0.9); border:1px solid var(--line); border-radius:6px; color:var(--ink); font-family:'JetBrains Mono'; font-size:12px; outline:none;">
+                        <option value="All">All Workspace Spaces</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="label-micro" style="margin-bottom:4px; display:block;">FILTER BY GENDER</label>
+                    <select id="filterGenderSelect" style="width:100%; padding:8px 12px; background:rgba(5,8,16,0.9); border:1px solid var(--line); border-radius:6px; color:var(--ink); font-family:'JetBrains Mono'; font-size:12px; outline:none;">
+                        <option value="All">All Genders</option>
+                        <option value="Male">👦 Male</option>
+                        <option value="Female">👧 Female</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="label-micro" style="margin-bottom:4px; display:block;">SEARCH BY TRACK ID</label>
+                    <input type="text" id="searchTrackId" placeholder="e.g. 1, 2..." style="width:100%;">
+                </div>
+
+                <div style="margin-top:16px;">
+                    <button class="btn btn-primary" id="refreshRosterBtn" style="width:100%;">🔄 REFRESH ROSTER</button>
+                    <button class="btn btn-secondary" id="exportCsvBtn" style="width:100%; margin-top:6px;">⬇ EXPORT CSV</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Occupants Gallery Cards Grid -->
+        <div class="panel">
+            <div class="panel-title">
+                <div class="panel-title-left">
+                    <span class="led led-mint"></span>
+                    <span>OCCUPANT FACE AVATARS & SPACE TIME BREAKDOWN</span>
+                </div>
+                <span class="label-micro" style="color:var(--mint);">INDIVIDUAL TIME LOGS</span>
+            </div>
+
+            <div id="occupantsGrid" class="occupants-grid">
+                <!-- Occupant Cards dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Occupants Analytics Summary Table -->
+        <div class="panel" style="margin-top:20px;">
+            <div class="panel-title">
+                <div class="panel-title-left">
+                    <span class="led led-amber"></span>
+                    <span>OCCUPANT ROSTER MATRIX SUMMARY</span>
+                </div>
+                <span class="label-micro">DETAILED TIME LOG MATRIX</span>
+            </div>
+
+            <div class="table-container">
+                <table class="analytics-table">
+                    <thead>
+                        <tr>
+                            <th>Face Avatar</th>
+                            <th>Track ID</th>
+                            <th>Gender & Confidence</th>
+                            <th>Posture</th>
+                            <th>Total Active Duration</th>
+                            <th>Current / Last Space</th>
+                            <th>Space Time Breakdown</th>
+                        </tr>
+                    </thead>
+                    <tbody id="occupantsTableBody">
+                        <!-- Table rows inserted dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Sci-Fi Footer -->
+    <footer style="padding:16px 20px; border-top:1px solid var(--line); margin-top:20px; text-align:center;">
+        <div class="label-micro" style="color:var(--ink-faint);">
+            AEGIS·OS v3.2 — PROFILE “BUILDING A-4” · OCCUPANT FACE RECOGNITION & WORKSPACE TIME LOGGING ENGINE
+        </div>
+    </footer>
+
+
+    <!-- Link a live occupant to a registered person (teaches recognition from this camera) -->
+    <dialog id="linkDialog" style="background:var(--panel); color:var(--ink); border:1px solid var(--cyan); border-radius:10px; padding:20px; max-width:420px;">
+        <h3 style="margin:0 0 8px; font-family:'JetBrains Mono',monospace; font-size:14px;">LINK TO A REGISTERED PERSON</h3>
+        <p style="font-size:12px; color:var(--ink-dim); line-height:1.5; margin:0 0 12px;">
+            Tell the system who this is. It remembers how they look on this camera and will name them automatically from now on, including after a restart.
+        </p>
+        <select id="linkPerson" style="width:100%; padding:8px; background:#050810; color:#fff; border:1px solid var(--line); border-radius:6px; font-family:'JetBrains Mono',monospace;"></select>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+            <button class="btn btn-secondary" onclick="document.getElementById('linkDialog').close()">Cancel</button>
+            <button class="btn btn-primary" id="linkConfirm">LINK</button>
+        </div>
+    </dialog>
+
+    <!-- Script -->
+    <script>
+        // Digital HUD Clock
+        function updateHudClock() {
+            const hudClockEl = document.getElementById('hudClock');
+            if (hudClockEl) {
+                const now = new Date();
+                const hrs = String(now.getHours()).padStart(2, '0');
+                const mins = String(now.getMinutes()).padStart(2, '0');
+                const secs = String(now.getSeconds()).padStart(2, '0');
+                hudClockEl.textContent = `${hrs}:${mins}:${secs}`;
+            }
+        }
+        setInterval(updateHudClock, 1000);
+        updateHudClock();
+
+        let allOccupants = [];
+        let lastLive = false;
+        const isAnonymous = id => /^\d+$/.test(String(id));
+
+        // Format Seconds to MM:SS or HH:MM:SS
+        function fmtSec(sec) {
+            sec = Math.max(0, Math.round(sec));
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+        }
+
+        // Color mapper for spaces
+        const ZONE_COLOR_MAP = {
+            'Project Alpha Area': '#ff8c00',
+            'Project Beta Zone': '#00d2ff',
+            'Dev Team Zone': '#ff8c00',
+            'Design Sprint Area': '#ff3cb4',
+            'AI Research Pod': '#00d2ff',
+            'Floating / Unassigned': '#f59e0b'
+        };
+
+        function getSpaceColor(name, idx) {
+            if (ZONE_COLOR_MAP[name]) return ZONE_COLOR_MAP[name];
+            const colors = ['#ff8c00', '#00d2ff', '#ff3cb4', '#34d399', '#a855f7', '#f59e0b'];
+            return colors[idx % colors.length];
+        }
+
+        // Fetch Occupants Data from Server API
+        async function fetchOccupantsData() {
+            try {
+                const sel = document.getElementById('sessionSelect').value;
+                const resp = await fetch('/api/occupants_data' + (sel ? `?session=${encodeURIComponent(sel)}` : ''));
+                const data = await resp.json();
+                if (data.success) {
+                    allOccupants = data.occupants || [];
+                    lastLive = !!data.live;
+                    populateSessionOptions(data.sessions || [], sel);
+                    renderSessionStatus(data);
+                    populateSpaceFilterOptions(allOccupants);
+                    renderOccupantsUI();
+                }
+            } catch (e) {
+                console.error('Failed to fetch occupant roster data:', e);
+            }
+        }
+
+        function populateSessionOptions(sessions, selected) {
+            const select = document.getElementById('sessionSelect');
+            const signature = sessions.map(s => `${s.session_id}:${s.occupants}:${s.live}`).join('|');
+            if (select.dataset.signature === signature) return;
+            select.dataset.signature = signature;
+            select.innerHTML = '<option value="">Current / latest session</option>';
+            sessions.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.session_id;
+                const label = (s.source || s.session_id).replace(/\/\/[^@/]*@/, '//***@');
+                opt.textContent = `${s.started_at} · ${label} · ${s.occupants} occupants${s.live ? ' · LIVE' : (s.ended_at ? '' : ' · interrupted')}`;
+                select.appendChild(opt);
+            });
+            select.value = selected;
+        }
+
+        function renderSessionStatus(data) {
+            const el = document.getElementById('sessionStatus');
+            if (data.live) {
+                const cam = data.camera_status === 'live' ? '🟢 LIVE' : `🟡 ${String(data.camera_status || '').toUpperCase()}`;
+                el.textContent = `${cam} · UPDATING EVERY 2s`;
+                el.style.color = 'var(--mint)';
+            } else if (data.session_id) {
+                el.textContent = '📁 SAVED LOG (no live feed running)';
+                el.style.color = 'var(--amber)';
+            } else {
+                el.textContent = '— NO SESSIONS YET';
+                el.style.color = 'var(--ink-dim)';
+            }
+        }
+
+        document.getElementById('sessionSelect').addEventListener('change', fetchOccupantsData);
+
+        function populateSpaceFilterOptions(occupants) {
+            const filterSpaceSelect = document.getElementById('filterSpaceSelect');
+            const currentVal = filterSpaceSelect.value;
+            const spacesSet = new Set();
+
+            occupants.forEach(o => {
+                Object.keys(o.time_per_zone || {}).forEach(z => spacesSet.add(z));
+            });
+
+            filterSpaceSelect.innerHTML = '<option value="All">All Workspace Spaces</option>';
+            spacesSet.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = `📁 ${s}`;
+                filterSpaceSelect.appendChild(opt);
+            });
+            filterSpaceSelect.value = currentVal;
+        }
+
+        // Render Cards Grid & Summary Table
+        function renderOccupantsUI() {
+            const grid = document.getElementById('occupantsGrid');
+            const tbody = document.getElementById('occupantsTableBody');
+            const totalBadge = document.getElementById('totalOccupantsBadge');
+
+            const spaceFilter = document.getElementById('filterSpaceSelect').value;
+            const genderFilter = document.getElementById('filterGenderSelect').value;
+            const searchTrack = document.getElementById('searchTrackId').value.trim().toLowerCase();
+
+            // Filter occupants
+            const filtered = allOccupants.filter(occ => {
+                if (searchTrack && !String(occ.track_id).toLowerCase().includes(searchTrack)) {
+                    return false;
+                }
+                if (genderFilter !== 'All' && occ.gender !== genderFilter) {
+                    return false;
+                }
+                if (spaceFilter !== 'All' && !occ.time_per_zone[spaceFilter]) {
+                    return false;
+                }
+                return true;
+            });
+
+            totalBadge.textContent = `${filtered.length} OCCUPANTS TRACKED`;
+            grid.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--ink-dim); font-family: 'JetBrains Mono';">
+                    📷 No occupants recorded yet. Connect a camera or run a video in the Live Command Studio; logs are saved automatically and stay here after you switch pages.
+                </div>`;
+                return;
+            }
+
+            filtered.forEach((occ, idx) => {
+                // Card UI
+                const card = document.createElement('div');
+                card.className = 'occupant-card';
+
+                const avatarHtml = occ.face_b64 
+                    ? `<img src="${occ.face_b64}" class="occ-avatar-img" alt="Track ID #${occ.track_id}">`
+                    : `<div class="occ-avatar-placeholder">👤</div>`;
+
+                const genderColor = occ.gender === 'Female' ? 'var(--magenta)' : 'var(--cyan)';
+                const genderIcon = occ.gender === 'Female' ? '👧' : '👦';
+
+                // Build Stacked Space Distribution Bar
+                let distSegmentsHtml = '';
+                let spaceBreakdownHtml = '';
+                let colorIdx = 0;
+
+                Object.entries(occ.time_per_zone || {}).forEach(([zname, sec]) => {
+                    const pct = occ.zone_percentages[zname] || 0;
+                    const c = getSpaceColor(zname, colorIdx++);
+                    distSegmentsHtml += `<div class="space-dist-seg" style="width:${pct}%; background:${c};" title="${zname}: ${fmtSec(sec)} (${pct}%)"></div>`;
+
+                    spaceBreakdownHtml += `
+                        <div class="legend-item">
+                            <span><strong style="color:${c};">📁 ${zname}</strong></span>
+                            <span><strong>${fmtSec(sec)}</strong> (${pct}%)</span>
+                        </div>
+                    `;
+                });
+
+                // Timeline list
+                let timelineHtml = '';
+                (occ.timeline || []).slice(-4).forEach(t => {
+                    timelineHtml += `<div class="timeline-item"><span>${t.timestamp}</span> — <strong>${t.event}</strong></div>`;
+                });
+
+                card.innerHTML = `
+                    <div class="occ-header">
+                        ${avatarHtml}
+                        <div style="flex:1;">
+                            <div class="occ-id-badge">${isAnonymous(occ.track_id) ? `PERSON TRACK ID #${occ.track_id}` : `👤 ${String(occ.track_id).replace(/[<>&]/g, "")}`}</div>
+                            <div style="font-size:11px; margin-top:4px; font-family:'JetBrains Mono'; color:${genderColor};">
+                                ${genderIcon} ${occ.gender} (${(occ.gender_conf * 100).toFixed(0)}%) · ${occ.posture || 'Active'}
+                            </div>
+                            <div style="font-size:11px; margin-top:2px; font-family:'JetBrains Mono'; color:var(--mint);">
+                                ⏱️ Total Active: <strong>${fmtSec(occ.total_seconds)}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${lastLive && isAnonymous(occ.track_id) ? `<button class="btn btn-secondary" style="font-size:11px;" onclick="openLinkDialog('${occ.track_id}')">🔗 This is a registered person…</button>` : ''}
+
+                    <div>
+                        <div class="label-micro" style="margin-bottom:4px;">TIME SPENT DISTRIBUTION PER SPACE</div>
+                        <div class="space-dist-bar">${distSegmentsHtml}</div>
+                    </div>
+
+                    <div class="space-time-legend">
+                        ${spaceBreakdownHtml}
+                    </div>
+
+                    ${occ.timeline && occ.timeline.length > 0 ? `
+                        <div>
+                            <div class="label-micro" style="margin-bottom:4px; color:var(--ink-faint);">SPACE MOVEMENT TIMELINE</div>
+                            <div class="timeline-list">${timelineHtml}</div>
+                        </div>
+                    ` : ''}
+                `;
+                grid.appendChild(card);
+
+                // Table Row UI
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${occ.face_b64 ? `<img src="${occ.face_b64}" style="width:40px; height:40px; border-radius:6px; object-fit:cover; border:1px solid var(--line);">` : '👤'}</td>
+                    <td><strong>ID #${occ.track_id}</strong></td>
+                    <td style="color:${genderColor};">${genderIcon} ${occ.gender} (${(occ.gender_conf * 100).toFixed(0)}%)</td>
+                    <td>${occ.posture || 'Active'}</td>
+                    <td style="color:var(--mint);"><strong>${fmtSec(occ.total_seconds)}</strong></td>
+                    <td><code>${occ.current_zone || 'Floating / Unassigned'}</code></td>
+                    <td>
+                        <div class="space-dist-bar" style="width:160px;">${distSegmentsHtml}</div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Event Listeners for Filters
+        document.getElementById('filterSpaceSelect').addEventListener('change', renderOccupantsUI);
+        document.getElementById('filterGenderSelect').addEventListener('change', renderOccupantsUI);
+        document.getElementById('searchTrackId').addEventListener('input', renderOccupantsUI);
+
+        let linkTarget = null;
+        async function openLinkDialog(trackId) {
+            linkTarget = trackId;
+            const select = document.getElementById('linkPerson');
+            try {
+                const res = await (await fetch('/api/peoples')).json();
+                select.innerHTML = (res.peoples || []).map(p => `<option value="${p.id}">${String(p.person_code).replace(/[<>&"]/g, '')} · ${String(p.name).replace(/[<>&"]/g, '')}</option>`).join('');
+            } catch (e) { select.innerHTML = ''; }
+            if (!select.options.length) { alert('No registered people yet. Add them on the People Database page first.'); return; }
+            document.getElementById('linkDialog').showModal();
+        }
+        document.getElementById('linkConfirm').addEventListener('click', async () => {
+            const personId = document.getElementById('linkPerson').value;
+            const occ = allOccupants.find(o => String(o.track_id) === String(linkTarget));
+            try {
+                const res = await fetch(`/api/peoples/${personId}/link_occupant`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identity: linkTarget, thumb_b64: occ ? occ.face_b64 : '' })
+                });
+                const data = await res.json();
+                document.getElementById('linkDialog').close();
+                if (!data.success) { alert(data.error || 'Could not link this person.'); return; }
+                fetchOccupantsData();
+            } catch (e) { alert('Network error.'); }
+        });
+
+        document.getElementById('refreshRosterBtn').addEventListener('click', fetchOccupantsData);
+        document.getElementById('exportCsvBtn').addEventListener('click', () => {
+            const sel = document.getElementById('sessionSelect').value;
+            window.location.href = '/api/occupants_export.csv' + (sel ? `?session=${encodeURIComponent(sel)}` : '');
+        });
+
+        // Auto Poll Roster Data every 2 seconds
+        setInterval(fetchOccupantsData, 2000);
+        fetchOccupantsData();
+    </script>
+    <script src="/static/common.js"></script>
+</body>
+</html>

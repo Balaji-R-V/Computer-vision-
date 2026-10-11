@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block subtitle %}Alert Rules, Notifications & Privacy{% endblock %}
+{% block content %}
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-amber"></span><span>ALERT RULES</span></div></div>
+    <div class="form-row">
+        <div><label><input type="checkbox" id="a_enabled"> Alerts enabled</label></div>
+        <div><label>Camera offline for (seconds)</label><input type="number" id="a_offline_after_seconds" min="10"></div>
+        <div><label>Long stay in one zone (minutes, 0 = off)</label><input type="number" id="a_dwell_minutes" min="0"></div>
+        <div><label>Don't repeat the same alert for (minutes)</label><input type="number" id="a_cooldown_minutes" min="1"></div>
+        <div><label>Clip length each side (seconds, 0 = no clips)</label><input type="number" id="a_clip_seconds" min="0" max="20"></div>
+    </div>
+    <div class="form-row">
+        <div style="grid-column:1/-1"><label>Restricted zones (zone names, comma-separated; anyone entering raises an alert)</label><input type="text" id="a_restricted_zones" placeholder="e.g. Server Room, Finance"></div>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-cyan"></span><span>NOTIFICATIONS</span></div></div>
+    <div class="form-row">
+        <div style="grid-column:1/-1"><label>Webhook URL (Slack, Teams, Discord or any incoming webhook)</label><input type="text" id="a_webhook_url" placeholder="https://hooks.slack.com/services/..."></div>
+    </div>
+    <div class="form-row">
+        <div><label>Email to (comma-separated)</label><input type="text" id="a_email_to"></div>
+        <div><label>SMTP server</label><input type="text" id="a_smtp_host" placeholder="smtp.office365.com"></div>
+        <div><label>SMTP port</label><input type="number" id="a_smtp_port"></div>
+        <div><label>SMTP username</label><input type="text" id="a_smtp_user" autocomplete="off"></div>
+        <div><label>SMTP password</label><input type="password" id="a_smtp_password" autocomplete="new-password"></div>
+        <div><label>From address</label><input type="text" id="a_smtp_from"></div>
+        <div><label><input type="checkbox" id="a_smtp_tls"> Use STARTTLS</label></div>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-primary" id="saveAlerts">💾 SAVE ALERT SETTINGS</button>
+        <button class="btn btn-secondary" id="testAlerts">📨 SEND TEST NOTIFICATION</button>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-cyan"></span><span>PERSON RECOGNITION</span></div></div>
+    <div class="form-row">
+        <div><label>Body match strictness (0.50 - 0.95)</label><input type="number" id="r_body_match_threshold" step="0.01" min="0.5" max="0.95"></div>
+        <div><label>Face match strictness (0.25 - 0.80)</label><input type="number" id="r_face_match_threshold" step="0.01" min="0.25" max="0.8"></div>
+        <div><label><input type="checkbox" id="r_auto_learn"> Learn how people look on camera after a confident face match</label></div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:12px; margin:0 0 12px; line-height:1.6;">
+        Higher = stricter: fewer people are named, fewer mistakes. <b>0.72</b> body strictness is a safe default.
+        If your registration photos come from a different camera or lighting and people are not being recognised, try <b>0.66</b>, but expect more look-alike mix-ups.
+        The most reliable fix is on the Occupant Time Logs page: use <b>"This is a registered person"</b> on a live occupant so the system learns them from this camera.
+    </p>
+    <button class="btn btn-primary" id="saveRecognition">💾 SAVE RECOGNITION SETTINGS</button>
+</div>
+
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-mint"></span><span>PRIVACY</span></div></div>
+    <div class="form-row">
+        <div><label><input type="checkbox" id="p_blur_faces"> Blur faces (live view, clips, face crops)</label></div>
+        <div><label><input type="checkbox" id="p_store_faces"> Save face crops in the occupant log</label></div>
+        <div><label>Delete stored face crops after (days, 0 = keep)</label><input type="number" id="p_face_retention_days" min="0"></div>
+        <div><label>Delete presence history after (days, 0 = keep)</label><input type="number" id="p_presence_retention_days" min="0"></div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:12px; margin:0 0 12px;">Blurring applies to new frames immediately. Face crops already stored are only removed by the retention period above. Time logs are kept.</p>
+    <button class="btn btn-primary" id="savePrivacy">💾 SAVE PRIVACY SETTINGS</button>
+</div>
+
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-amber"></span><span>AWS REKOGNITION CLOUD ENGINE</span></div></div>
+    <div class="form-row">
+        <div><label>AWS Access Key ID</label><input type="text" id="aws_access_key_id" placeholder="AKIAIOSFODNN7EXAMPLE" autocomplete="off"></div>
+        <div><label>AWS Secret Access Key</label><input type="password" id="aws_secret_access_key" placeholder="••••••••••••••••••••••••••••••••" autocomplete="new-password"></div>
+        <div><label>AWS Region</label><input type="text" id="aws_region" placeholder="us-east-1"></div>
+        <div><label>Rekognition Collection ID</label><input type="text" id="aws_collection_id" placeholder="aegis-rekognition-collection"></div>
+    </div>
+    <div class="form-row">
+        <div><label>Min Detection Confidence (%)</label><input type="number" id="aws_min_confidence" min="10" max="99" step="1" placeholder="50"></div>
+        <div><label>Keyframe Cadence (seconds)</label><input type="number" id="aws_sample_interval_sec" min="0.1" max="2.0" step="0.05" placeholder="0.35"></div>
+    </div>
+    <p style="color:var(--ink-dim); font-size:12px; margin:0 0 12px; line-height:1.6;">
+        Configures Amazon Rekognition cloud computer vision. Secret keys are securely encrypted at rest.
+        When logging in via the <b>AWS Rekognition Service portal</b>, live video analysis and facial recognition
+        will run through AWS cloud APIs instead of local GPU YOLO/OpenCV models.
+    </p>
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-primary" id="saveAws">💾 SAVE AWS SETTINGS</button>
+        <button class="btn btn-secondary" id="testAws">☁️ TEST AWS REKOGNITION CONNECTION</button>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const A_TEXT = ['offline_after_seconds','dwell_minutes','cooldown_minutes','clip_seconds','webhook_url','email_to','smtp_host','smtp_port','smtp_user','smtp_password','smtp_from'];
+const A_BOOL = ['enabled','smtp_tls'];
+const P_NUM = ['face_retention_days','presence_retention_days'];
+const R_NUM = ['body_match_threshold','face_match_threshold'];
+const R_BOOL = ['auto_learn'];
+const P_BOOL = ['blur_faces','store_faces'];
+const AWS_FIELDS = ['access_key_id','secret_access_key','region','collection_id','min_confidence','sample_interval_sec'];
+
+function fill(s, prefix, text, bools) {
+    text.forEach(k => document.getElementById(prefix + k).value = s[k] ?? '');
+    if (bools) bools.forEach(k => document.getElementById(prefix + k).checked = !!s[k]);
+}
+async function load() {
+    try {
+        const a = (await api('/api/settings/alerts')).settings;
+        fill(a, 'a_', A_TEXT, A_BOOL);
+        document.getElementById('a_restricted_zones').value = (a.restricted_zones || []).join(', ');
+        fill((await api('/api/settings/privacy')).settings, 'p_', P_NUM, P_BOOL);
+        fill((await api('/api/settings/recognition')).settings, 'r_', R_NUM, R_BOOL);
+        try {
+            const aws = (await api('/api/settings/aws')).settings;
+            fill(aws, 'aws_', AWS_FIELDS);
+        } catch(e) {}
+    } catch (e) { toast(e.message, true); }
+}
+function collect(prefix, text, bools) {
+    const o = {};
+    text.forEach(k => o[k] = document.getElementById(prefix + k).value);
+    if (bools) bools.forEach(k => o[k] = document.getElementById(prefix + k).checked);
+    return o;
+}
+document.getElementById('saveAlerts').onclick = async () => {
+    const body = collect('a_', A_TEXT, A_BOOL);
+    body.restricted_zones = document.getElementById('a_restricted_zones').value;
+    try { await api('/api/settings/alerts', 'POST', body); toast('Alert settings saved'); load(); } catch (e) { toast(e.message, true); }
+};
+document.getElementById('testAlerts').onclick = async () => {
+    try { await api('/api/settings/alerts/test', 'POST'); toast('Test notification sent'); } catch (e) { toast(e.message, true); }
+};
+document.getElementById('saveRecognition').onclick = async () => {
+    try { await api('/api/settings/recognition', 'POST', collect('r_', R_NUM, R_BOOL)); toast('Recognition settings saved and applied'); load(); } catch (e) { toast(e.message, true); }
+};
+document.getElementById('savePrivacy').onclick = async () => {
+    try { await api('/api/settings/privacy', 'POST', collect('p_', P_NUM, P_BOOL)); toast('Privacy settings saved'); } catch (e) { toast(e.message, true); }
+};
+document.getElementById('saveAws').onclick = async () => {
+    const body = collect('aws_', AWS_FIELDS);
+    try {
+        await api('/api/settings/aws', 'POST', body);
+        toast('AWS Rekognition settings saved & encrypted');
+        load();
+    } catch(e) { toast(e.message, true); }
+};
+document.getElementById('testAws').onclick = async () => {
+    try {
+        const res = await api('/api/settings/aws/test', 'POST');
+        const d = res.diagnostics || {};
+        toast(`✅ AWS Connected (${d.region}) · Latency: ${d.inference_latency_ms} ms`);
+    } catch(e) {
+        toast(`❌ AWS Error: ${e.message}`, true);
+    }
+};
+load();
+</script>
+{% endblock %}

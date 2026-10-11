@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block subtitle %}User Accounts{% endblock %}
+{% block content %}
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-cyan"></span><span>ADD OR UPDATE A USER</span></div></div>
+    <div class="form-row">
+        <div><label>Username</label><input type="text" id="u_name" autocomplete="off" placeholder="3-32 letters, digits, . _ -"></div>
+        <div><label>Password (min 8)</label><input type="password" id="u_pass" autocomplete="new-password"></div>
+        <div><label>Role</label><select id="u_role"><option value="viewer">viewer (read-only)</option><option value="admin">admin (full control)</option></select></div>
+    </div>
+    <button class="btn btn-primary" id="addUser">➕ SAVE USER</button>
+    <p style="color:var(--ink-dim); font-size:12px;">Saving an existing username resets its password and role.</p>
+</div>
+<div class="panel">
+    <div class="panel-title"><div class="panel-title-left"><span class="led led-mint"></span><span>ACCOUNTS</span></div></div>
+    <div id="list"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function load() {
+    let data;
+    try { data = await api('/api/users'); } catch (e) { toast(e.message, true); return; }
+    document.getElementById('list').innerHTML = `<table class="tbl"><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last sign-in</th><th></th></tr></thead><tbody>` +
+        data.users.map(u => `<tr>
+            <td><strong>${esc(u.username)}</strong></td>
+            <td>${esc(u.role)}</td>
+            <td>${u.disabled ? '<span class="pill warning">disabled</span>' : '<span class="pill info">active</span>'}</td>
+            <td>${esc(u.last_login || '—')}</td>
+            <td style="white-space:nowrap">
+                <button class="btn btn-secondary" onclick="toggleRole('${esc(u.username)}','${u.role}')">${u.role === 'admin' ? 'Make viewer' : 'Make admin'}</button>
+                <button class="btn btn-secondary" onclick="toggleDisabled('${esc(u.username)}',${!u.disabled})">${u.disabled ? 'Enable' : 'Disable'}</button>
+                <button class="btn btn-secondary" style="color:#f87171" onclick="del('${esc(u.username)}')">Delete</button>
+            </td></tr>`).join('') + '</tbody></table>';
+}
+async function patch(u, body, ok) { try { await api('/api/users/' + encodeURIComponent(u), 'PATCH', body); toast(ok); load(); } catch (e) { toast(e.message, true); } }
+const toggleRole = (u, role) => patch(u, { role: role === 'admin' ? 'viewer' : 'admin' }, 'Role updated');
+const toggleDisabled = (u, d) => patch(u, { disabled: d }, d ? 'User disabled' : 'User enabled');
+async function del(u) {
+    if (!confirm(`Delete user ${u}?`)) return;
+    try { await api('/api/users/' + encodeURIComponent(u), 'DELETE'); toast('User deleted'); load(); } catch (e) { toast(e.message, true); }
+}
+document.getElementById('addUser').onclick = async () => {
+    try {
+        await api('/api/users', 'POST', { username: document.getElementById('u_name').value.trim(), password: document.getElementById('u_pass').value, role: document.getElementById('u_role').value });
+        document.getElementById('u_pass').value = ''; toast('User saved'); load();
+    } catch (e) { toast(e.message, true); }
+};
+load();
+</script>
+{% endblock %}

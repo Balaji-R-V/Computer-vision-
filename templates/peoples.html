@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS·OS — People Database & Re-ID Registry</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(5, 8, 16, 0.8);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 3px;
+        }
+
+        .nav-tab-btn {
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-decoration: none;
+            color: var(--ink-faint);
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab-btn.active, .nav-tab-btn:hover {
+            background: rgba(34, 211, 238, 0.15);
+            color: var(--cyan);
+            box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.35);
+        }
+
+        /* Peoples Grid Layout */
+        .peoples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .person-card {
+            background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .person-card:hover {
+            border-color: rgba(34, 211, 238, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .person-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .person-avatar-img {
+            width: 76px;
+            height: 76px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid var(--cyan);
+            background: #050810;
+        }
+
+        .person-avatar-placeholder {
+            width: 76px;
+            height: 76px;
+            border-radius: 8px;
+            border: 2px dashed var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            background: #050810;
+        }
+
+        .person-code-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--cyan);
+            letter-spacing: 0.08em;
+            background: rgba(34, 211, 238, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            display: inline-block;
+        }
+
+        .person-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 4px;
+        }
+
+        .person-role {
+            font-size: 12px;
+            color: var(--ink-dim);
+            margin-top: 2px;
+        }
+
+        .person-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--ink-faint);
+            border-top: 1px dashed var(--line);
+            padding-top: 8px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(3, 5, 12, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 520px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            background: #050810;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--cyan);
+        }
+
+        .photo-preview-box {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            border: 2px dashed var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #050810;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .photo-preview-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Aegis OS Sci-Fi Glass Header -->
+    <header class="app-header">
+        <div class="header-left">
+            <svg width="34" height="34" viewBox="0 0 34 34" class="shrink-0">
+                <circle cx="17" cy="17" r="15.5" fill="none" stroke="#1a2540" stroke-width="1" />
+                <circle cx="17" cy="17" r="10.5" fill="none" stroke="#1a2540" stroke-width="1" stroke-dasharray="2 3" />
+                <circle cx="17" cy="17" r="5" fill="none" stroke="#22304f" stroke-width="1" />
+                <g class="anim-radar">
+                    <path d="M17 17 L17 2 A15 15 0 0 1 27.6 9.3 Z" fill="rgba(34,211,238,0.28)" />
+                    <line x1="17" y1="17" x2="17" y2="2" stroke="#22d3ee" stroke-width="1.2" />
+                </g>
+                <circle cx="17" cy="17" r="1.8" fill="#22d3ee" />
+            </svg>
+            <div>
+                <div class="brand-title">AEGIS<span>·OS</span> <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">v3.2</span></div>
+                <div class="label-micro" style="margin-top:2px;">PEOPLE DATABASE & FACIAL RE-ID REGISTRY</div>
+            </div>
+
+            <div class="header-divider"></div>
+
+            <!-- Page Navigation Tabs -->
+            <nav class="nav-tabs">
+                <a href="/" class="nav-tab-btn">📺 LIVE COMMAND STUDIO</a>
+                <a href="/test_connection" class="nav-tab-btn">🔌 MODEL TEST PANEL</a>
+                <a href="/peoples" class="nav-tab-btn active">👥 PEOPLE DATABASE</a>
+                <a href="/occupants" class="nav-tab-btn">📊 OCCUPANT TIME LOGS</a>
+            </nav>
+        </div>
+
+        <div class="header-right">
+            <div class="hud-clock">
+                <div class="clock-val" id="hudClock">15:35:42</div>
+                <div class="label-micro">DATABASE ARMED · RE-ID ACTIVE</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main style="max-width:1400px; margin: 24px auto; padding: 0 20px;">
+        
+        <!-- Controls & Filter Toolbar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:16px 20px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span class="led led-cyan"></span>
+                <div>
+                    <h2 style="font-family:'Outfit',sans-serif; font-size:18px; font-weight:700; color:#fff; margin:0;">REGISTERED PEOPLE DATABASE</h2>
+                    <p style="font-size:12px; color:var(--ink-dim); margin:2px 0 0 0;">Manage personnel profiles, photo embeddings, and facial recognition identities.</p>
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px;">
+                <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search by name, code, department..." style="width:260px;" onkeyup="filterPeoples()">
+                <button class="btn btn-primary" onclick="openRegisterModal()">➕ REGISTER NEW PERSON</button>
+            </div>
+        </div>
+
+        <!-- Registered People Cards Grid -->
+        <div class="peoples-grid" id="peoplesGrid">
+            <div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--ink-dim);">
+                Loading registered people from database...
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Register / Edit Person -->
+    <div class="modal-overlay" id="personModal">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="led led-cyan"></span>
+                    <h3 id="modalTitle" style="font-family:'Outfit',sans-serif; font-size:16px; font-weight:700; color:#fff; margin:0;">REGISTER NEW PERSON</h3>
+                </div>
+                <button onclick="closePersonModal()" style="background:none; border:none; color:var(--ink-dim); font-size:20px; cursor:pointer;">✕</button>
+            </div>
+
+            <form id="personForm" onsubmit="savePerson(event)">
+                <input type="hidden" id="personId">
+                
+                <div style="margin-bottom:14px;">
+                    <label style="font-size:11px; font-family:'JetBrains Mono'; color:var(--cyan); display:block; margin-bottom:4px;">RECOGNITION PHOTOS (ADD SEVERAL)</label>
+                    <input type="file" id="photoInput" accept="image/*" multiple class="form-control" onchange="addPhotos(event)">
+                    <div id="photoTips" style="font-size:11px; color:var(--ink-dim); margin:6px 0; line-height:1.5;">
+                        Best results: <b>one clear front-facing photo</b> (face at least 40&nbsp;px wide) <b>plus one or two full- or half-body photos</b>.
+                        Each photo is checked below so you can see exactly what recognition will use from it.
+                    </div>
+                    <div id="photoList" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px;"></div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:11px; font-family:'JetBrains Mono'; color:var(--ink-faint); display:block; margin-bottom:4px;">FULL NAME *</label>
+                        <input type="text" id="nameInput" class="form-control" placeholder="e.g. John Doe" required>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-family:'JetBrains Mono'; color:var(--ink-faint); display:block; margin-bottom:4px;">GENDER</label>
+                        <select id="genderInput" class="form-control">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Unspecified">Unspecified</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:11px; font-family:'JetBrains Mono'; color:var(--ink-faint); display:block; margin-bottom:4px;">DEPARTMENT</label>
+                        <input type="text" id="departmentInput" class="form-control" placeholder="e.g. Engineering, R&D">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-family:'JetBrains Mono'; color:var(--ink-faint); display:block; margin-bottom:4px;">ROLE / TITLE</label>
+                        <input type="text" id="roleInput" class="form-control" placeholder="e.g. Senior Specialist">
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:11px; font-family:'JetBrains Mono'; color:var(--ink-faint); display:block; margin-bottom:4px;">NOTES / ACCESS PERMISSIONS</label>
+                    <textarea id="notesInput" class="form-control" rows="2" placeholder="e.g. Perimeter Access Granted..."></textarea>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--line); padding-top:14px;">
+                    <button type="button" class="btn btn-secondary" onclick="closePersonModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">SAVE PERSON TO DATABASE</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let allPeoples = [];
+        let recognition = {};
+        let pendingPhotos = [];   // photos added in this dialog, not saved yet: {b64, report, error}
+        let savedPhotos = [];     // photos already stored for the person being edited
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        // Shrinks large phone photos in the browser before upload (the server keeps at most 720 px anyway)
+        function shrinkImage(file, maxSide = 1280) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = reject;
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onerror = reject;
+                    img.onload = () => {
+                        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+                        const c = document.createElement('canvas');
+                        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+                        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                        resolve(c.toDataURL('image/jpeg', 0.9));
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function badge(ok, text) {
+            return `<span style="display:inline-block;margin:2px 3px 0 0;padding:1px 6px;border-radius:9px;font-size:10px;font-weight:700;background:${ok ? 'rgba(52,211,153,.18)' : 'rgba(248,113,113,.15)'};color:${ok ? '#34d399' : '#f87171'}">${text}</span>`;
+        }
+
+        function reportBadges(r) {
+            if (!r) return '';
+            const body = r.body_kind === 'full' ? badge(true, '🧍 full body') : r.body_kind === 'half' ? badge(true, '🧍 upper/seated body')
+                       : r.body_kind === 'whole' ? badge(true, '🧍 whole image') : r.body_kind === 'closeup' ? badge(false, '🧍 close-up (no body)') : badge(false, '🧍 no body');
+            const face = r.face_usable ? badge(true, `🙂 face ${r.face_px}px`) : badge(false, r.face_found ? `🙂 face too small (${r.face_px}px)` : '🙂 no face');
+            return face + body;
+        }
+
+        function renderPhotos() {
+            const box = document.getElementById('photoList');
+            const saved = savedPhotos.map(p => `
+                <div style="background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:6px;">
+                    ${p.photo_b64 ? `<img src="${p.photo_b64}" style="width:100%;height:110px;object-fit:cover;border-radius:6px;">`
+                                  : `<div style="height:110px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#050810;border-radius:6px;">${p.kind === 'auto' ? '🤖' : '📹'}</div>`}
+                    <div>${p.has_face ? badge(true, '🙂 face') : ''}${p.body_views ? badge(true, `🧍 ${p.body_views} view${p.body_views > 1 ? 's' : ''}`) : ''}
+                         ${p.kind === 'live' ? badge(true, '📹 from live camera') : p.kind === 'auto' ? badge(true, '🤖 auto-learned') : ''}</div>
+                    <button type="button" class="btn btn-secondary" style="font-size:10px;padding:2px 8px;margin-top:4px;color:#f87171" onclick="removeSavedPhoto(${p.id})">Remove</button>
+                </div>`);
+            const pending = pendingPhotos.map((p, i) => `
+                <div style="background:var(--panel-2);border:1px solid ${p.report && !p.report.usable ? '#f59e0b' : 'var(--line)'};border-radius:8px;padding:6px;">
+                    <img src="${p.b64}" style="width:100%;height:110px;object-fit:cover;border-radius:6px;">
+                    <div>${p.error ? badge(false, 'could not check') : p.report ? reportBadges(p.report) : '<span style="font-size:10px;color:var(--ink-dim)">checking…</span>'}</div>
+                    ${p.report ? p.report.notes.map(n => `<div style="font-size:10px;color:#fbbf24;margin-top:3px;">${esc(n)}</div>`).join('') : ''}
+                    <button type="button" class="btn btn-secondary" style="font-size:10px;padding:2px 8px;margin-top:4px;" onclick="removePendingPhoto(${i})">Remove</button>
+                </div>`);
+            box.innerHTML = saved.concat(pending).join('') || '<div style="color:var(--ink-faint);font-size:12px;">No photos yet.</div>';
+        }
+
+        async function addPhotos(event) {
+            for (const file of event.target.files) {
+                try {
+                    const b64 = await shrinkImage(file);
+                    const entry = { b64, report: null, error: false };
+                    pendingPhotos.push(entry);
+                    renderPhotos();
+                    try {
+                        const res = await fetch('/api/peoples/analyze_photo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ photo_b64: b64 }) });
+                        const data = await res.json();
+                        if (data.success) entry.report = data.report; else entry.error = true;
+                    } catch (e) { entry.error = true; }
+                    renderPhotos();
+                } catch (e) { alert(`Could not read ${file.name}`); }
+            }
+            event.target.value = '';
+        }
+
+        function removePendingPhoto(i) { pendingPhotos.splice(i, 1); renderPhotos(); }
+
+        async function removeSavedPhoto(photoId) {
+            const id = document.getElementById('personId').value;
+            if (!id || !confirm('Remove this photo from recognition?')) return;
+            const res = await fetch(`/api/peoples/${id}/photos/${photoId}`, { method: 'DELETE' });
+            if ((await res.json()).success) { await loadSavedPhotos(id); loadPeoples(); }
+        }
+
+        async function loadSavedPhotos(id) {
+            try {
+                const res = await fetch(`/api/peoples/${id}/photos`);
+                savedPhotos = (await res.json()).photos || [];
+            } catch (e) { savedPhotos = []; }
+            renderPhotos();
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('hudClock').innerText = now.toTimeString().split(' ')[0];
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        async function loadPeoples() {
+            try {
+                const res = await fetch('/api/peoples');
+                const data = await res.json();
+                if (data.success) {
+                    allPeoples = data.peoples;
+                    try { recognition = (await (await fetch('/api/peoples/recognition')).json()).people || {}; } catch (e) { recognition = {}; }
+                    renderPeoplesGrid(allPeoples);
+                }
+            } catch (err) {
+                console.error("Error loading peoples:", err);
+            }
+        }
+
+        function renderPeoplesGrid(peoples) {
+            const grid = document.getElementById('peoplesGrid');
+            if (!peoples || peoples.length === 0) {
+                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--ink-dim);">No registered people found in database. Click "Register New Person" to add.</div>`;
+                return;
+            }
+
+            grid.innerHTML = peoples.map(p => {
+                const avatar = p.photo_b64 ? `<img src="${p.photo_b64}" class="person-avatar-img" alt="${esc(p.name)}">` : `<div class="person-avatar-placeholder">👤</div>`;
+                const rec = recognition[String(p.id)] || { faces: 0, bodies: 0, photos: 0 };
+                const recBadges = (rec.faces ? badge(true, `🙂 ${rec.faces} face`) : badge(false, '🙂 no face')) +
+                                  (rec.bodies ? badge(true, `🧍 ${rec.bodies} body`) : badge(false, '🧍 no body')) +
+                                  (!rec.faces && !rec.bodies ? '<div style="font-size:10px;color:#fbbf24;margin-top:3px;">Cannot be recognised yet: add a clearer photo.</div>' : '');
+                const genderColor = p.gender === 'Male' ? 'var(--cyan)' : (p.gender === 'Female' ? '#f472b6' : 'var(--ink-faint)');
+                
+                return `
+                    <div class="person-card">
+                        <div class="person-header">
+                            ${avatar}
+                            <div>
+                                <span class="person-code-badge">${esc(p.person_code)}</span>
+                                <div class="person-name">${esc(p.name)}</div>
+                                <div class="person-role">${esc(p.role || 'Staff Occupant')} • <span style="color:${genderColor}">${esc(p.gender)}</span></div>
+                            </div>
+                        </div>
+
+                        <div style="font-size:12px; color:var(--ink-dim); line-height:1.4;">
+                            <div>🏢 <strong>Department:</strong> ${esc(p.department || 'General')}</div>
+                            ${p.notes ? `<div style="margin-top:4px;">📝 ${esc(p.notes)}</div>` : ''}
+                            <div style="margin-top:6px;">${recBadges}</div>
+                        </div>
+
+                        <div class="person-info-row">
+                            <span>REG: ${p.created_at || 'Recently'}</span>
+                            <span>LAST SEEN: ${p.last_seen || 'Active'}</span>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                            <a href="/?target=${p.person_code}" class="btn btn-secondary" style="font-size:11px; padding:4px 10px;">🎯 TARGET LOCK</a>
+                            <div style="display:flex; gap:6px;">
+                                <button onclick="editPerson(${p.id})" class="btn btn-secondary" style="font-size:11px; padding:4px 8px;">✏️ Edit</button>
+                                <button onclick="deletePerson(${p.id})" class="btn btn-secondary" style="font-size:11px; padding:4px 8px; color:#f87171;">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterPeoples() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allPeoples.filter(p => 
+                p.name.toLowerCase().includes(query) ||
+                p.person_code.toLowerCase().includes(query) ||
+                (p.department && p.department.toLowerCase().includes(query)) ||
+                (p.role && p.role.toLowerCase().includes(query))
+            );
+            renderPeoplesGrid(filtered);
+        }
+
+        function openRegisterModal() {
+            document.getElementById('modalTitle').innerText = 'REGISTER NEW PERSON';
+            document.getElementById('personForm').reset();
+            document.getElementById('personId').value = '';
+            pendingPhotos = [];
+            savedPhotos = [];
+            renderPhotos();
+            document.getElementById('personModal').classList.add('active');
+        }
+
+        function closePersonModal() {
+            document.getElementById('personModal').classList.remove('active');
+        }
+
+        function editPerson(id) {
+            const p = allPeoples.find(item => item.id === id);
+            if (!p) return;
+            document.getElementById('modalTitle').innerText = `EDIT PERSON [${p.person_code}]`;
+            document.getElementById('personId').value = p.id;
+            document.getElementById('nameInput').value = p.name;
+            document.getElementById('genderInput').value = p.gender || 'Unspecified';
+            document.getElementById('departmentInput').value = p.department || '';
+            document.getElementById('roleInput').value = p.role || '';
+            document.getElementById('notesInput').value = p.notes || '';
+            
+            pendingPhotos = [];
+            savedPhotos = [];
+            renderPhotos();
+            loadSavedPhotos(p.id);
+            document.getElementById('personModal').classList.add('active');
+        }
+
+        async function savePerson(event) {
+            event.preventDefault();
+            const id = document.getElementById('personId').value;
+            const payload = {
+                name: document.getElementById('nameInput').value.trim(),
+                gender: document.getElementById('genderInput').value,
+                department: document.getElementById('departmentInput').value.trim(),
+                role: document.getElementById('roleInput').value.trim(),
+                notes: document.getElementById('notesInput').value.trim(),
+                photos: pendingPhotos.map(x => x.b64)
+            };
+
+            const url = id ? `/api/peoples/${id}` : '/api/peoples';
+            const method = id ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const unusable = (data.photo_reports || []).filter(r => !r.usable);
+                    closePersonModal();
+                    loadPeoples();
+                    if (unusable.length) alert(`Saved, but ${unusable.length} photo(s) cannot be used for recognition:\n\n` + unusable.map(r => '• ' + (r.notes || []).join(' ')).join('\n'));
+                } else {
+                    alert("Error saving person: " + (data.error || "Unknown error"));
+                }
+            } catch (err) {
+                alert("Network error saving person.");
+            }
+        }
+
+        async function deletePerson(id) {
+            const person = allPeoples.find(x => x.id === id);
+            if (!confirm(`Are you sure you want to delete ${person ? person.name : 'this person'} from the database?`)) return;
+            try {
+                const res = await fetch(`/api/peoples/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    loadPeoples();
+                }
+            } catch (err) {
+                alert("Error deleting person.");
+            }
+        }
+
+        // Initialize on page load
+        loadPeoples();
+    </script>
+    <script src="/static/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+[Unit]
+Description=Aegis-OS Computer Vision Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/aegis-app
+ExecStart=/home/ubuntu/aegis-app/venv/bin/python server.py
+Restart=always
+RestartSec=5
+Environment=HOST=0.0.0.0
+Environment=PORT=5050
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

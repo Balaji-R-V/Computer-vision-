@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #050810;
+    --panel: #0c1220;
+    --panel-2: #111a2b;
+    --line: #1a2540;
+    --line-soft: #141d33;
+    --ink: #dbe4f0;
+    --ink-dim: #8494ad;
+    --ink-faint: #4a5a76;
+    --cyan: #22d3ee;
+    --mint: #34d399;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --magenta: #e879f9;
+  }
+
+  * {
+    border-color: var(--line);
+  }
+
+  html,
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-sans-reading {
+    font-family: "Inter", -apple-system, "Segoe UI", sans-serif;
+  }
+
+  ::selection {
+    background: rgba(34, 211, 238, 0.25);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #22304f;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2e4166;
+  }
+}
+
+@layer components {
+  .panel {
+    background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+
+  .panel-title {
+    @apply flex items-center gap-2 px-3 h-9 border-b text-[10px] font-semibold uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-dim);
+    border-color: var(--line-soft);
+  }
+
+  .led {
+    @apply inline-block w-1.5 h-1.5 rounded-full;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  .label-micro {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  /* scanline / noise material */
+  .scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.022) 0px,
+      rgba(255, 255, 255, 0.022) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    z-index: 5;
+  }
+
+  .glass {
+    background: rgba(12, 18, 32, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* ---------- ambient motion ---------- */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
+.anim-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes radar-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.anim-radar {
+  animation: radar-sweep 4.2s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.anim-ticker {
+  animation: ticker-scroll 60s linear infinite;
+}
+.ticker-mask:hover .anim-ticker {
+  animation-play-state: paused;
+}
+
+@keyframes ping-ring {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@keyframes alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.anim-alert-in {
+  animation: alert-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes blink-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.anim-blink {
+  animation: blink-soft 1.1s steps(2, start) infinite;
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-ticker,
+  .anim-radar,
+  .anim-pulse-dot,
+  .anim-blink {
+    animation: none;
+  }
+}
