@@ -54,8 +54,8 @@ def bgr_to_base64(bgr_img):
 def format_rtsp_url(rtsp_url, username=None, password=None):
     """
     Formats RTSP stream URL with URL-encoded username & password.
-    Example: rtsp://192.168.1.2:554/Streaming/Channels/401, username="admin", password="in22labs@2026"
-    Result: rtsp://admin:in22labs%402026@192.168.1.2:554/Streaming/Channels/401
+    Example: rtsp://192.168.1.2:554/Streaming/Channels/401, username="admin", password="password123"
+    Result: rtsp://admin:password123@192.168.1.2:554/Streaming/Channels/401
     """
     if not rtsp_url:
         return ""
