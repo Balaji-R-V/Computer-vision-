@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IN22 Rekognition — Smart Video Analytics — {{ 'First-time setup' if setup else 'Sign in' }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css?v=3.2.5">
+    <link rel="stylesheet" href="/static/style.css?v=3.2.6">
     <style>
         body {
             display: flex;
@@ -172,14 +172,14 @@
         }
         .creds-options {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 8px;
         }
         .btn-cred {
             background: #050810;
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 6px;
-            padding: 8px 10px;
+            padding: 8px 12px;
             cursor: pointer;
             display: flex;
             flex-direction: column;
@@ -199,13 +199,6 @@
             font-size: 11px;
             font-weight: 700;
             color: var(--cyan);
-        }
-        .btn-cred:nth-child(2) .cred-role {
-            color: #fbbf24;
-        }
-        .btn-cred:nth-child(2):hover {
-            border-color: #f59e0b;
-            background: rgba(245, 158, 11, 0.08);
         }
         .btn-cred .cred-user {
             font-size: 10px;
@@ -272,18 +265,13 @@
                     <span class="cred-role"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22d3ee;margin-right:4px;"></span> Administrator</span>
                     <span class="cred-user">admin / admin123</span>
                 </button>
-                <button type="button" class="btn-cred" onclick="autoFill('in22labs')">
-                    <span class="cred-role"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-right:4px;"></span> DevOps In22labs</span>
-                    <span class="cred-user">in22labs / 2[(6#Lo...</span>
-                </button>
             </div>
         </div>
     </form>
 
     <script>
         const CREDENTIALS = {
-            admin: { user: 'admin', pass: 'admin123', engine: 'aws_rekognition' },
-            in22labs: { user: 'in22labs', pass: '2[(6#Lo<Y^$ZXW9x', engine: 'aws_rekognition' }
+            admin: { user: 'admin', pass: 'admin123', engine: 'aws_rekognition' }
         };
 
         function selectEngine(mode) {
