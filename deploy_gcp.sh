@@ -43,7 +43,7 @@ if [ ! -f .env ]; then
 # Aegis-OS Dual Vision Engine Deployment Config
 AEGIS_ENGINE_MODE=aws_rekognition
 AWS_DEFAULT_REGION=ap-south-1
-AWS_REKOGNITION_COLLECTION=aegis-rekognition-collection
+AWS_REKOGNITION_COLLECTION=in22-rekognition-collection
 HOST=0.0.0.0
 PORT=5050
 # Enter your AWS credentials below (optional):
@@ -73,8 +73,10 @@ sudo ln -sf /etc/nginx/sites-available/aegis /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl restart nginx
 
-# 7. Configure firewall (allow HTTP, HTTPS, and port 5050)
+# 7. Configure firewall (allow SSH 22, HTTP, HTTPS, and port 5050)
 echo "[Deploy] Configuring local firewall rules..."
+sudo ufw allow 22/tcp
+sudo ufw allow ssh
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw allow 5050/tcp
