@@ -301,6 +301,45 @@ def delete_person_record(person_id):
         return jsonify({'error': str(e)}), 500
 
 
+def extract_media_preview(filepath):
+    """Extracts first frame base64 and dimension metadata for an image or video file."""
+    ext = os.path.splitext(filepath)[1].lower()
+    is_img = ext in ['.jpg', '.jpeg', '.png', '.webp', '.bmp']
+    if is_img:
+        frame = cv2.imread(filepath)
+        if frame is None:
+            return None
+        h, w, _ = frame.shape
+        return {
+            'file_type': 'image',
+            'width': w,
+            'height': h,
+            'total_frames': 1,
+            'fps': 0,
+            'first_frame': bgr_to_base64(frame)
+        }
+    else:
+        cap = cv2.VideoCapture(filepath)
+        if not cap.isOpened():
+            return None
+        ret, frame = cap.read()
+        if not ret or frame is None:
+            cap.release()
+            return None
+        h, w, _ = frame.shape
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = float(cap.get(cv2.CAP_PROP_FPS)) or 25.0
+        cap.release()
+        return {
+            'file_type': 'video',
+            'width': w,
+            'height': h,
+            'total_frames': total_frames,
+            'fps': round(fps, 1),
+            'first_frame': bgr_to_base64(frame)
+        }
+
+
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     """Uploads video or image file and extracts reference first frame."""
@@ -315,39 +354,140 @@ def upload_file():
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
     
-    file_type = 'image' if file.content_type.startswith('image') else 'video'
-    
-    if file_type == 'image':
-        frame = cv2.imread(filepath)
-        if frame is None:
-            return jsonify({'error': 'Could not decode image'}), 400
-        h, w, _ = frame.shape
-        first_frame_b64 = bgr_to_base64(frame)
-        total_frames = 1
-        fps = 0
-    else:
-        cap = cv2.VideoCapture(filepath)
-        ret, frame = cap.read()
-        if not ret:
-            cap.release()
-            return jsonify({'error': 'Could not read video frame'}), 400
-        h, w, _ = frame.shape
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = float(cap.get(cv2.CAP_PROP_FPS)) or 25.0
-        cap.release()
-        first_frame_b64 = bgr_to_base64(frame)
+    meta = extract_media_preview(filepath)
+    if not meta:
+        return jsonify({'error': 'Could not decode uploaded media file'}), 400
         
     return jsonify({
         'success': True,
         'filename': filename,
         'filepath': filepath,
-        'file_type': file_type,
-        'width': w,
-        'height': h,
-        'total_frames': total_frames,
-        'fps': round(fps, 1),
-        'first_frame': first_frame_b64
+        'file_type': meta['file_type'],
+        'width': meta['width'],
+        'height': meta['height'],
+        'total_frames': meta['total_frames'],
+        'fps': meta['fps'],
+        'first_frame': meta['first_frame']
     })
+
+
+@app.route('/api/recent_uploads', methods=['GET'])
+def get_recent_uploads():
+    """
+    Returns list of previously uploaded media files.
+    Filters by days (default 5 days), sorted by most recent.
+    Also returns recent uploads fallback list.
+    """
+    try:
+        days = float(request.args.get('days', 5))
+    except (ValueError, TypeError):
+        days = 5.0
+
+    now = time.time()
+    cutoff = now - (days * 86400)
+    
+    files = []
+    if os.path.exists(UPLOAD_FOLDER):
+        for f in os.listdir(UPLOAD_FOLDER):
+            if f.startswith('.'):
+                continue
+            fp = os.path.join(UPLOAD_FOLDER, f)
+            if not os.path.isfile(fp):
+                continue
+            
+            try:
+                stat = os.stat(fp)
+                mtime = stat.st_mtime
+                
+                clean_name = f
+                file_ts = mtime
+                if f.startswith('upload_'):
+                    parts = f.split('_', 2)
+                    if len(parts) >= 3 and parts[1].isdigit():
+                        try:
+                            file_ts = float(parts[1])
+                            clean_name = parts[2]
+                        except Exception:
+                            pass
+                
+                ext = os.path.splitext(f)[1].lower()
+                file_type = 'image' if ext in ['.jpg', '.jpeg', '.png', '.webp', '.bmp'] else 'video'
+                size_mb = round(stat.st_size / (1024 * 1024), 2)
+                
+                age_sec = max(0, now - file_ts)
+                age_days = age_sec / 86400
+                
+                from datetime import datetime
+                dt = datetime.fromtimestamp(file_ts)
+                formatted_date = dt.strftime('%d %b %Y, %I:%M %p')
+                if age_days < (1/24):
+                    time_ago = f"{max(1, int(age_sec // 60))}m ago"
+                elif age_days < 1:
+                    time_ago = f"{int(age_sec // 3600)}h ago"
+                elif age_days < 2:
+                    time_ago = "Yesterday"
+                else:
+                    time_ago = f"{int(age_days)}d ago"
+                    
+                files.append({
+                    'filename': f,
+                    'clean_name': clean_name,
+                    'file_type': file_type,
+                    'size_mb': size_mb,
+                    'timestamp': file_ts,
+                    'formatted_date': formatted_date,
+                    'time_ago': time_ago,
+                    'age_days': round(age_days, 1),
+                    'within_days': file_ts >= cutoff
+                })
+            except Exception:
+                continue
+
+    # Sort descending by timestamp
+    files.sort(key=lambda x: x['timestamp'], reverse=True)
+    recent_within_days = [f for f in files if f['within_days']]
+    
+    return jsonify({
+        'success': True,
+        'days': days,
+        'count': len(recent_within_days),
+        'total_count': len(files),
+        'uploads': recent_within_days,
+        'all_uploads': files[:25]
+    })
+
+
+@app.route('/api/load_uploaded_file/<path:filename>', methods=['GET'])
+def load_uploaded_file(filename):
+    """Loads an existing uploaded file from UPLOAD_FOLDER and extracts preview metadata."""
+    safe_name = os.path.basename(filename)
+    filepath = os.path.join(UPLOAD_FOLDER, safe_name)
+    if not os.path.exists(filepath):
+        return jsonify({'error': f'File {safe_name} not found'}), 404
+        
+    meta = extract_media_preview(filepath)
+    if not meta:
+        return jsonify({'error': 'Could not extract preview frame from file'}), 400
+        
+    clean_name = safe_name
+    if safe_name.startswith('upload_'):
+        parts = safe_name.split('_', 2)
+        if len(parts) >= 3 and parts[1].isdigit():
+            clean_name = parts[2]
+            
+    return jsonify({
+        'success': True,
+        'filename': safe_name,
+        'clean_name': clean_name,
+        'filepath': filepath,
+        'file_type': meta['file_type'],
+        'width': meta['width'],
+        'height': meta['height'],
+        'total_frames': meta['total_frames'],
+        'fps': meta['fps'],
+        'first_frame': meta['first_frame']
+    })
+
 
 
 # Global dictionaries for video processing and live streaming
@@ -729,7 +869,29 @@ def video_feed(filename):
 
             ret, frame = cap.read()
             if not ret:
-                break
+                latest_cfg['is_paused'] = True
+                latest_cfg['at_eof'] = True
+                if filename in live_stream_stats:
+                    live_stream_stats[filename]['is_paused'] = True
+                    live_stream_stats[filename]['current_frame'] = total_frames
+
+                # Hold last frame and wait for seek, restart, or unpause
+                while cap.isOpened():
+                    time.sleep(0.15)
+                    latest_cfg = active_stream_configs.get(filename, config)
+                    if 'seek_frame' in latest_cfg and latest_cfg['seek_frame'] is not None:
+                        target_frame = max(0, min(total_frames - 1, int(latest_cfg.pop('seek_frame'))))
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
+                        frame_cnt = target_frame
+                        latest_cfg['at_eof'] = False
+                        latest_cfg['is_paused'] = False
+                        break
+                    if not latest_cfg.get('is_paused', True):
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        frame_cnt = 0
+                        latest_cfg['at_eof'] = False
+                        break
+                continue
             frame_cnt += 1
             latest_cfg['last_frame'] = frame_cnt
 
@@ -813,16 +975,19 @@ def stream_control(filename):
         if target_f is not None:
             cfg['seek_frame'] = int(target_f)
             cfg['last_frame'] = int(target_f)
+            cfg['is_paused'] = False
     elif action == 'skip':
         offset_sec = float(data.get('seconds', 5))
         offset_frames = int(offset_sec * 25)
         curr = cfg.get('last_frame', 0)
         cfg['seek_frame'] = max(0, curr + offset_frames)
         cfg['last_frame'] = cfg['seek_frame']
+        cfg['is_paused'] = False
     elif action == 'restart':
         cfg['seek_frame'] = 0
         cfg['last_frame'] = 0
         cfg['is_paused'] = False
+        cfg['at_eof'] = False
 
     if filename in live_stream_stats:
         live_stream_stats[filename]['is_paused'] = cfg.get('is_paused', False)

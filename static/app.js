@@ -166,6 +166,7 @@ async function handleFileUpload(file) {
                 redrawCanvas();
             };
             appState.firstFrameImage.src = data.first_frame;
+            if (typeof loadRecentUploads === 'function') loadRecentUploads();
         } else {
             fileInfo.innerHTML = `Error: ${data.error}`;
         }
@@ -616,6 +617,8 @@ function renderStatsInUI(stats) {
     // Update Video Scrubber & Playback Controls Deck
     const totalFrames = stats.total_frames || 0;
     const currentFrame = stats.current_frame || 0;
+    window._currentTotalFrames = totalFrames;
+    window._currentFrame = currentFrame;
     const videoControlDeck = document.getElementById('videoControlDeck');
     
     if (totalFrames > 0 && videoControlDeck) {
@@ -1319,3 +1322,281 @@ setInterval(async () => {
                                         appState.fileType === 'rtsp' ? appState.uploadedFilename : null);
     } catch (e) {}
 }, 5000);
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VIDEO PLAYBACK TRANSPORT & SCRUBBER CONTROLS
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.togglePlayPause = async function() {
+    const filename = appState.uploadedFilename;
+    if (!filename) return;
+    try {
+        const resp = await fetch(`/api/stream_control/${encodeURIComponent(filename)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'toggle' })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            const btn = document.getElementById('btnPlayPause');
+            if (btn) {
+                if (data.is_paused) {
+                    btn.innerHTML = 'PLAY';
+                    btn.style.background = '#10b981';
+                    btn.style.color = '#000';
+                } else {
+                    btn.innerHTML = 'PAUSE';
+                    btn.style.background = '#00d2ff';
+                    btn.style.color = '#050810';
+                }
+            }
+        }
+    } catch (err) {
+        console.error('togglePlayPause error:', err);
+    }
+};
+
+window.skipSeconds = async function(seconds) {
+    const filename = appState.uploadedFilename;
+    if (!filename) return;
+    try {
+        await fetch(`/api/stream_control/${encodeURIComponent(filename)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'skip', seconds: parseFloat(seconds) })
+        });
+        const btn = document.getElementById('btnPlayPause');
+        if (btn) {
+            btn.innerHTML = 'PAUSE';
+            btn.style.background = '#00d2ff';
+            btn.style.color = '#050810';
+        }
+    } catch (err) {
+        console.error('skipSeconds error:', err);
+    }
+};
+
+window.restartVideo = async function() {
+    const filename = appState.uploadedFilename;
+    if (!filename) return;
+    try {
+        await fetch(`/api/stream_control/${encodeURIComponent(filename)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'restart' })
+        });
+        const img = mediaOutputContainer ? mediaOutputContainer.querySelector('img') : null;
+        if (img) {
+            img.src = `/api/video_feed/${encodeURIComponent(filename)}?t=${Date.now()}`;
+        }
+        const btn = document.getElementById('btnPlayPause');
+        if (btn) {
+            btn.innerHTML = 'PAUSE';
+            btn.style.background = '#00d2ff';
+            btn.style.color = '#050810';
+        }
+    } catch (err) {
+        console.error('restartVideo error:', err);
+    }
+};
+
+window.setPlaySpeed = async function(speed) {
+    const filename = appState.uploadedFilename;
+    if (!filename) return;
+    try {
+        const resp = await fetch(`/api/stream_control/${encodeURIComponent(filename)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'speed', speed: parseInt(speed) })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            [1, 2, 4].forEach(s => {
+                const b = document.getElementById(`speedBtn${s}`);
+                if (b) {
+                    if (s === parseInt(speed)) b.classList.add('active-speed');
+                    else b.classList.remove('active-speed');
+                }
+            });
+        }
+    } catch (err) {
+        console.error('setPlaySpeed error:', err);
+    }
+};
+
+// Bind Click-to-Seek on Video Scrubber Bar
+const videoProgressTrackEl = document.getElementById('videoProgressTrack');
+if (videoProgressTrackEl) {
+    videoProgressTrackEl.addEventListener('click', async (e) => {
+        const filename = appState.uploadedFilename;
+        if (!filename) return;
+        const total = window._currentTotalFrames || 0;
+        if (total <= 0) return;
+        
+        const rect = videoProgressTrackEl.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+        const targetFrame = Math.floor(ratio * total);
+        
+        try {
+            await fetch(`/api/stream_control/${encodeURIComponent(filename)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'seek', frame: targetFrame })
+            });
+            const btn = document.getElementById('btnPlayPause');
+            if (btn) {
+                btn.innerHTML = 'PAUSE';
+                btn.style.background = '#00d2ff';
+                btn.style.color = '#050810';
+            }
+        } catch (err) {
+            console.error('Scrubber seek error:', err);
+        }
+    });
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PREVIOUS UPLOADS (LAST 5 DAYS) GALLERY & MANAGEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+const recentUploadsContainer = document.getElementById('recentUploadsContainer');
+const recentUploadsSelect = document.getElementById('recentUploadsSelect');
+const recentUploadsList = document.getElementById('recentUploadsList');
+
+window.loadRecentUploads = async function(days = 5) {
+    if (!recentUploadsList) return;
+    try {
+        const resp = await fetch(`/api/recent_uploads?days=${days}`);
+        const data = await resp.json();
+        if (!data.success) return;
+
+        const uploads = (data.uploads && data.uploads.length > 0) ? data.uploads : (data.all_uploads || []);
+        const isFallback = (!data.uploads || data.uploads.length === 0) && uploads.length > 0;
+
+        // Populate Dropdown
+        if (recentUploadsSelect) {
+            recentUploadsSelect.innerHTML = `<option value="">-- Select a previous upload (${uploads.length}) --</option>` +
+                uploads.map(u => `<option value="${u.filename}" ${u.filename === appState.uploadedFilename ? 'selected' : ''}>${u.clean_name} (${u.size_mb} MB • ${u.time_ago})</option>`).join('');
+        }
+
+        // Populate Card Gallery
+        if (uploads.length === 0) {
+            recentUploadsList.innerHTML = `<div style="font-size:10px; color:var(--ink-dim); text-align:center; padding:12px; font-family:'JetBrains Mono';">No uploads found. Upload a video above to get started.</div>`;
+            return;
+        }
+
+        let html = '';
+        if (isFallback) {
+            html += `<div style="font-size:9.5px; color:var(--amber); padding:2px 4px; font-family:'JetBrains Mono'; border-bottom:1px solid rgba(245,158,11,0.2); margin-bottom:4px;">No uploads strictly in last 5 days. Showing latest uploads:</div>`;
+        }
+
+        html += uploads.map(u => {
+            const isSelected = u.filename === appState.uploadedFilename;
+            const isVideo = u.file_type === 'video';
+            return `
+            <div id="upload_card_${encodeURIComponent(u.filename)}" class="recent-upload-card ${isSelected ? 'active-selected' : ''}">
+                <div style="overflow:hidden; flex:1; min-width:0;">
+                    <div style="font-size:11px; color:#fff; font-weight:700; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="${u.clean_name}">
+                        ${isVideo ? '🎥 ' : '🖼️ '}${u.clean_name}
+                    </div>
+                    <div style="font-size:9px; color:var(--ink-dim); display:flex; align-items:center; gap:5px; margin-top:2px;">
+                        <span style="color:var(--cyan); font-weight:700;">${u.size_mb} MB</span>
+                        <span>•</span>
+                        <span style="color:var(--amber); font-weight:600;">${u.time_ago}</span>
+                        <span>•</span>
+                        <span style="color:var(--ink-faint);">${u.formatted_date}</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:4px; flex-shrink:0;">
+                    <button type="button" onclick="selectPreviousUpload('${u.filename}')" class="btn btn-secondary" style="padding:3px 7px; font-size:10px; font-family:'JetBrains Mono';" title="Load into Interactive 4-Point Canvas Studio">
+                        MAP
+                    </button>
+                    ${isVideo ? `
+                    <button type="button" onclick="playPreviousUpload('${u.filename}')" class="btn" style="padding:3px 8px; font-size:10px; font-family:'JetBrains Mono'; background:var(--cyan); color:#050810; font-weight:700;" title="Stream & analyze video with current zones">
+                        ▶ PLAY
+                    </button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+
+        recentUploadsList.innerHTML = html;
+    } catch (err) {
+        console.error('loadRecentUploads error:', err);
+    }
+};
+
+// Select a previous upload: loads metadata, first frame thumbnail, and displays on Canvas Studio
+window.selectPreviousUpload = async function(filename) {
+    if (!filename) return;
+    fileInfo.classList.remove('hidden');
+    fileInfo.innerHTML = `Loading previous upload <strong>${filename}</strong>...`;
+
+    try {
+        const resp = await fetch(`/api/load_uploaded_file/${encodeURIComponent(filename)}`);
+        const data = await resp.json();
+        if (!data.success) {
+            fileInfo.innerHTML = `Failed to load file: ${data.error}`;
+            return;
+        }
+
+        appState.uploadedFilename = data.filename;
+        appState.fileType = data.file_type;
+        appState.imageWidth = data.width;
+        appState.imageHeight = data.height;
+
+        fileInfo.innerHTML = `<strong>${data.clean_name}</strong> loaded (${data.width}x${data.height} ${data.file_type === 'video' ? `@ ${data.fps} FPS • ${data.total_frames} frames` : ''})`;
+
+        // Highlight selected card
+        document.querySelectorAll('.recent-upload-card').forEach(el => el.classList.remove('active-selected'));
+        const selectedCard = document.getElementById(`upload_card_${encodeURIComponent(data.filename)}`);
+        if (selectedCard) selectedCard.classList.add('active-selected');
+        if (recentUploadsSelect) recentUploadsSelect.value = data.filename;
+
+        // Load reference first frame onto Canvas Studio
+        appState.firstFrameImage.onload = () => {
+            appState.isImageLoaded = true;
+            canvasPlaceholder.classList.add('hidden');
+            canvas.width = data.width;
+            canvas.height = data.height;
+            runProcessBtn.disabled = false;
+            updateShapesList();
+            redrawCanvas();
+
+            // Smoothly scroll down to Interactive 4-Point Canvas Studio
+            const studioSec = document.getElementById('studioSection');
+            if (studioSec) {
+                studioSec.classList.remove('collapsed');
+                studioSec.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+        appState.firstFrameImage.src = data.first_frame;
+    } catch (err) {
+        fileInfo.innerHTML = `Error loading previous upload: ${err.message}`;
+    }
+};
+
+// Quick-Play previous upload: selects file and triggers live stream processing immediately
+window.playPreviousUpload = async function(filename) {
+    await selectPreviousUpload(filename);
+    setTimeout(() => {
+        if (runProcessBtn && !runProcessBtn.disabled) {
+            runProcessBtn.click();
+        }
+    }, 250);
+};
+
+// Dropdown listener
+if (recentUploadsSelect) {
+    recentUploadsSelect.addEventListener('change', (e) => {
+        if (e.target.value) {
+            selectPreviousUpload(e.target.value);
+        }
+    });
+}
+
+// Initial load of recent uploads on startup
+loadRecentUploads();
+

@@ -29,6 +29,50 @@
             border-color: rgba(34, 211, 238, 0.35);
         }
 
+        .speed-btn {
+            padding: 3px 8px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--ink-dim);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .speed-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.06);
+        }
+        .speed-btn.active-speed {
+            background: var(--cyan);
+            color: #050810;
+            font-weight: 800;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
+        }
+        .recent-upload-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 7px 9px;
+            background: rgba(15, 20, 35, 0.7);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.18s ease;
+        }
+        .recent-upload-card:hover {
+            border-color: rgba(34, 211, 238, 0.45);
+            background: rgba(20, 32, 58, 0.85);
+        }
+        .recent-upload-card.active-selected {
+            border-color: var(--cyan);
+            background: rgba(34, 211, 238, 0.12);
+            box-shadow: 0 0 12px rgba(34, 211, 238, 0.25);
+        }
+
         @keyframes cropCardIn {
             from { opacity: 0; transform: translateY(10px) scale(0.92); }
             to   { opacity: 1; transform: translateY(0)    scale(1); }
@@ -142,6 +186,31 @@
                         </div>
                     </div>
                     <div id="fileInfo" class="file-info hidden"></div>
+
+                    <!-- Previous Uploads (Last 5 Days) Section -->
+                    <div id="recentUploadsContainer" style="margin-top:14px; border-top:1px solid rgba(255,255,255,0.08); padding-top:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span class="led led-mint"></span>
+                                <span style="font-size:10px; font-family:'JetBrains Mono'; color:var(--mint); font-weight:700; letter-spacing:0.06em;">PREVIOUS UPLOADS (LAST 5 DAYS)</span>
+                            </div>
+                            <button type="button" id="refreshRecentBtn" onclick="loadRecentUploads()" style="background:transparent; border:none; color:var(--cyan); font-size:10px; cursor:pointer; font-family:'JetBrains Mono'; font-weight:700;" title="Refresh uploaded files list">
+                                ⟳ REFRESH
+                            </button>
+                        </div>
+
+                        <!-- Dropdown Selector for Fast Selection -->
+                        <select id="recentUploadsSelect" style="width:100%; padding:7px 10px; background:#050810; border:1px solid var(--line); border-radius:6px; color:var(--cyan); font-family:'JetBrains Mono'; font-size:11px; margin-bottom:8px; outline:none; cursor:pointer;">
+                            <option value="">-- Select a previous upload --</option>
+                        </select>
+
+                        <!-- Scrollable Card Gallery of Recent Uploads -->
+                        <div id="recentUploadsList" style="max-height:175px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:2px;">
+                            <div style="font-size:10px; color:var(--ink-dim); text-align:center; padding:12px; font-family:'JetBrains Mono';">
+                                Loading previous uploads...
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- RTSP Network Stream View -->
@@ -486,7 +555,7 @@
     </footer>
 
     <!-- Application Script -->
-    <script src="/static/app.js?v=3.2.5"></script>
-    <script src="/static/common.js?v=3.2.5"></script>
+    <script src="/static/app.js?v=3.2.8"></script>
+    <script src="/static/common.js?v=3.2.8"></script>
 </body>
 </html>
