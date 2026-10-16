@@ -14,6 +14,7 @@ import json
 import base64
 import threading
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 import cv2
 import numpy as np
 
@@ -114,6 +115,90 @@ CATEGORY_COLORS = {
     'general': (0, 200, 100),       # Mint Green (BGR)
 }
 
+EMPTY_RESULT = {'persons': [], 'objects': [], 'faces': []}
+
+
+class _FlowBoxTracker:
+    """Moves person/face boxes between AWS keyframes with sparse optical flow, so boxes follow people at
+    full video frame rate while Rekognition itself only answers a few times per second."""
+
+    WORK_WIDTH = 480
+
+    def __init__(self):
+        self.gray = None
+        self.scale = 1.0
+        self.boxes = []        # float [x1, y1, x2, y2] in full-resolution coords
+        self.pts = None        # (N, 1, 2) float32 feature points in work coords
+        self.owner = None      # (N,) index of the box each point belongs to
+        self.seed_counts = []
+        self.limits = (0, 0)   # full-resolution (w, h)
+
+    @classmethod
+    def to_gray(cls, frame):
+        h, w = frame.shape[:2]
+        scale = min(1.0, cls.WORK_WIDTH / float(max(w, 1)))
+        if scale < 1.0:
+            frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), scale
+
+    def reset(self, gray, scale, boxes):
+        self.gray, self.scale = gray, scale
+        self.limits = (gray.shape[1] / scale, gray.shape[0] / scale)
+        self.boxes = [[float(v) for v in b] for b in boxes]
+        self._seed()
+
+    def _seed(self):
+        pts, owner = [], []
+        self.seed_counts = []
+        gh, gw = self.gray.shape[:2]
+        for i, b in enumerate(self.boxes):
+            x1, y1 = max(0, int(b[0] * self.scale)), max(0, int(b[1] * self.scale))
+            x2, y2 = min(gw, int(b[2] * self.scale)), min(gh, int(b[3] * self.scale))
+            n = 0
+            if x2 - x1 >= 4 and y2 - y1 >= 4:
+                corners = cv2.goodFeaturesToTrack(self.gray[y1:y2, x1:x2], maxCorners=40,
+                                                  qualityLevel=0.01, minDistance=3)
+                if corners is not None:
+                    corners = corners.reshape(-1, 2) + (x1, y1)
+                    pts.append(corners)
+                    owner.extend([i] * len(corners))
+                    n = len(corners)
+            self.seed_counts.append(n)
+        if pts:
+            self.pts = np.concatenate(pts).astype(np.float32).reshape(-1, 1, 2)
+            self.owner = np.array(owner, dtype=np.int32)
+        else:
+            self.pts, self.owner = None, None
+
+    def step(self, gray):
+        """Advances every box from the previous frame to `gray` and returns them as int tuples."""
+        if self.gray is not None and gray.shape == self.gray.shape and self.pts is not None:
+            lk = dict(winSize=(21, 21), maxLevel=3,
+                      criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.03))
+            nxt, st, _ = cv2.calcOpticalFlowPyrLK(self.gray, gray, self.pts, None, **lk)
+            if nxt is not None:
+                # Forward-backward check: LK happily reports "found" for points that snapped onto background
+                back, st_b, _ = cv2.calcOpticalFlowPyrLK(gray, self.gray, nxt, None, **lk)
+                fb_err = np.linalg.norm((back - self.pts).reshape(-1, 2), axis=1)
+                ok = (st.reshape(-1) == 1) & (st_b.reshape(-1) == 1) & (fb_err < 1.0)
+                d = (nxt - self.pts).reshape(-1, 2)
+                for i, b in enumerate(self.boxes):
+                    sel = ok & (self.owner == i)
+                    if np.count_nonzero(sel) >= 3:
+                        dx, dy = np.median(d[sel], axis=0) / self.scale
+                        b[0] += dx; b[2] += dx
+                        b[1] += dy; b[3] += dy
+                self.pts = nxt[ok].reshape(-1, 1, 2)
+                self.owner = self.owner[ok]
+        self.gray = gray
+        # Re-seed once a box has lost most of its points (occlusion, texture change, moved out of view)
+        if self.boxes and (self.owner is None or any(
+                np.count_nonzero(self.owner == i) < max(3, 0.5 * c) for i, c in enumerate(self.seed_counts))):
+            self._seed()
+        w, h = self.limits
+        return [(int(max(0, min(w, b[0]))), int(max(0, min(h, b[1]))),
+                 int(max(0, min(w, b[2]))), int(max(0, min(h, b[3])))) for b in self.boxes]
+
 
 class AWSRekognitionDetector:
     """
@@ -122,11 +207,13 @@ class AWSRekognitionDetector:
     """
 
     def __init__(self, region='ap-south-1', collection_id='aegis-rekognition-collection',
-                 min_confidence=50.0, sample_interval_sec=0.35):
+                 min_confidence=50.0, sample_interval_sec=5.0):
         self.region = region
         self.collection_id = collection_id
         self.min_confidence = min_confidence
-        self.sample_interval_sec = sample_interval_sec  # Cloud call frequency to balance latency & API quota
+        # Seconds between AWS keyframes (2 billed requests each). Video stays at full FPS regardless - boxes are
+        # tracked locally in between. 5 s ~ $1.44/h per camera; 0.35 s ~ $14-18/h. Override: AWS_REKOGNITION_INTERVAL_SEC
+        self.sample_interval_sec = sample_interval_sec
 
         self.yolo_conf = 0.35
         self.gender_conf = 0.40
@@ -171,6 +258,16 @@ class AWSRekognitionDetector:
         self._last_call_time = {}   # camera_id -> timestamp of last AWS Rekognition API call
         self._last_aws_result = {}  # camera_id -> cached detections between keyframe calls
         self._tracker_states = {}   # camera_id -> {track_id: bbox, ...}
+        # AWS calls run off the video thread: camera_id -> (future, gray, scale, submit_time) while in flight
+        self._pending = {}
+        self._flow = {}             # camera_id -> _FlowBoxTracker carrying boxes between keyframes
+        self._last_out_time = {}    # camera_id -> time the previous frame was returned (real output FPS)
+        self._aws_latency_ms = {}   # camera_id -> round-trip of the last keyframe
+        self._executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix='rekognition')
+        self._api_pool = ThreadPoolExecutor(max_workers=8, thread_name_prefix='rekognition-api')
+        self._yolo_lock = threading.Lock()
+        self.sample_interval_sec = float(os.environ.get('AWS_REKOGNITION_INTERVAL_SEC', self.sample_interval_sec))
+        self.max_side = int(os.environ.get('AWS_REKOGNITION_MAX_SIDE', 1024))
 
         # Initialize Boto3 Client
         self.client = None
@@ -385,6 +482,9 @@ class AWSRekognitionDetector:
             self._last_call_time.clear()
             self._last_aws_result.clear()
             self._tracker_states.clear()
+            self._pending.clear()       # an in-flight call finishes in the background and is discarded
+            self._flow.clear()
+            self._last_out_time.clear()
             self.load_db_peoples()
             if clear_target:
                 self.locked_target_id = None
@@ -489,6 +589,10 @@ class AWSRekognitionDetector:
 
     def _fallback_yolo_detect(self, frame):
         """Runs real-time vision on the actual frame to detect every person and office object."""
+        with self._yolo_lock:   # keyframe calls for several cameras can run at once; YOLO is not thread-safe
+            return self._fallback_yolo_detect_locked(frame)
+
+    def _fallback_yolo_detect_locked(self, frame):
         if self._local_yolo is None:
             try:
                 from ultralytics import YOLO
@@ -543,8 +647,8 @@ class AWSRekognitionDetector:
             return self._fallback_yolo_detect(frame)
 
         h_img, w_img = frame.shape[:2]
-        # Preserve resolution up to 1280px to detect distant/seated occupants
-        scale = min(1.0, 1280.0 / max(w_img, h_img))
+        # Smaller upload = faster round-trip; raise AWS_REKOGNITION_MAX_SIDE for distant/seated occupants
+        scale = min(1.0, float(self.max_side) / max(w_img, h_img))
         if scale < 1.0:
             small_frame = cv2.resize(frame, (int(w_img * scale), int(h_img * scale)))
         else:
@@ -568,14 +672,20 @@ class AWSRekognitionDetector:
         }
 
         try:
-            # 1. Detect labels (people & office objects)
+            # detect_labels and detect_faces are independent - send both at once instead of back to back
+            client = self.client
             obj_conf_floor = max(10.0, float(getattr(self, 'obj_conf', 0.10) * 100.0))
-            lbl_resp = self.client.detect_labels(
+            lbl_job = self._api_pool.submit(
+                client.detect_labels,
                 Image={'Bytes': jpeg_bytes},
                 MinConfidence=obj_conf_floor,
                 MaxLabels=100,
                 Features=['GENERAL_LABELS']
             )
+            face_job = self._api_pool.submit(client.detect_faces, Image={'Bytes': jpeg_bytes}, Attributes=['ALL'])
+
+            # 1. Detect labels (people & office objects)
+            lbl_resp = lbl_job.result()
 
             for lbl in lbl_resp.get('Labels', []):
                 raw_name = lbl.get('Name', '').strip()
@@ -620,7 +730,7 @@ class AWSRekognitionDetector:
             objects = self._deduplicate_objects(raw_objects)
 
             # 2. Detect faces (for gender & facial matching)
-            face_resp = self.client.detect_faces(Image={'Bytes': jpeg_bytes}, Attributes=['ALL'])
+            face_resp = face_job.result()
             for f in face_resp.get('FaceDetails', []):
                 bb = f.get('BoundingBox', {})
                 fx1 = int(bb.get('Left', 0) * w_img)
@@ -687,19 +797,63 @@ class AWSRekognitionDetector:
         cam_id = id(self._cam)
 
         now = time.time()
-        last_call = self._last_call_time.get(cam_id, 0.0)
+        gray, gscale = _FlowBoxTracker.to_gray(frame)
+        flow = self._flow.setdefault(cam_id, _FlowBoxTracker())
+        fresh = False
 
-        # Cloud Keyframe Cadence: call AWS Rekognition every sample_interval_sec
-        if now - last_call >= self.sample_interval_sec or cam_id not in self._last_aws_result:
+        # Cloud keyframes run in the background: the video never waits for the AWS round-trip.
+        # Only a new scene blocks - first frame, an uploaded image (no frame for >2 s), a seek or a reconnect - so
+        # the result is never empty or carried over from a different picture.
+        prev = flow.gray
+        scene_cut = (cam_id not in self._last_aws_result or prev is None or prev.shape != gray.shape
+                     or now - self._last_out_time.get(cam_id, 0.0) > 2.0
+                     or float(cv2.absdiff(prev, gray).mean()) > 35.0)
+        if scene_cut:
+            self._pending.pop(cam_id, None)   # an in-flight call for the old scene is discarded
             self._last_call_time[cam_id] = now
-            aws_res = self._call_aws_rekognition(frame)
-            self._last_aws_result[cam_id] = aws_res
+            res = self._call_aws_rekognition(frame)
+            self._aws_latency_ms[cam_id] = int((time.time() - now) * 1000)
+            self._last_aws_result[cam_id] = res
+            flow.reset(gray, gscale, [p['box'] for p in res['persons']] + [f['box'] for f in res['faces']])
+            fresh = True
         else:
-            aws_res = self._last_aws_result[cam_id]
+            job = self._pending.get(cam_id)
+            if job is not None and job[0].done():
+                del self._pending[cam_id]
+                fut, sent_gray, sent_scale, sent_at, seen = job
+                try:
+                    res = fut.result()
+                except Exception as e:
+                    print(f"[AWS Rekognition] keyframe failed: {e}", flush=True)
+                    res = None
+                if res is not None:
+                    self._aws_latency_ms[cam_id] = int((now - sent_at) * 1000)
+                    self._last_aws_result[cam_id] = res
+                    # Anchor boxes on the frame AWS actually saw, then replay the frames that arrived during the
+                    # round-trip in small hops (one big jump loses the points); step() below lands on this frame
+                    flow.reset(sent_gray, sent_scale,
+                               [p['box'] for p in res['persons']] + [f['box'] for f in res['faces']])
+                    stride = max(1, -(-len(seen) // 12))
+                    for g in seen[stride - 1::stride]:
+                        flow.step(g)
+                    fresh = True
+            elif job is not None:
+                job[4].append(gray)
+            if cam_id not in self._pending and now - self._last_call_time.get(cam_id, 0.0) >= self.sample_interval_sec:
+                self._last_call_time[cam_id] = now
+                self._pending[cam_id] = (self._executor.submit(self._call_aws_rekognition, frame.copy()),
+                                         gray, gscale, now, [])
 
-        detected_persons = aws_res.get('persons', [])
+        aws_res = self._last_aws_result.get(cam_id, EMPTY_RESULT)
+        n_persons = len(aws_res.get('persons', []))
+        moved = flow.step(gray)
+        if len(moved) == n_persons + len(aws_res.get('faces', [])):
+            detected_persons = [dict(p, box=b) for p, b in zip(aws_res['persons'], moved[:n_persons])]
+            detected_faces = [dict(f, box=b) for f, b in zip(aws_res['faces'], moved[n_persons:])]
+        else:
+            detected_persons = aws_res.get('persons', [])
+            detected_faces = aws_res.get('faces', [])
         detected_objects = aws_res.get('objects', [])
-        detected_faces = aws_res.get('faces', [])
 
         # Assign persistent Track IDs via IoU matching against previous frame
         prev_tracks = self._tracker_states.get(cam_id, {})
@@ -770,8 +924,11 @@ class AWSRekognitionDetector:
 
             raw_posture = "Sitting" if (aspect < 1.95 or seated_on_chair) else "Standing"
             hist = self.posture_history.setdefault(tid, [])
-            hist.append(raw_posture)
-            if len(hist) > 9:
+            if fresh or not hist:   # vote once per keyframe, so the window spans seconds, not 0.3 s of video
+                hist.append(raw_posture)
+            # ~4 s of votes (3..9): at a 5 s interval a sit/stand change shows after 2 keyframes, not 45 s
+            window = max(3, min(9, int(round(4.0 / max(self.sample_interval_sec, 0.1)))))
+            while len(hist) > window:
                 hist.pop(0)
             postures[tid] = max(set(hist), key=hist.count)
 
@@ -843,6 +1000,8 @@ class AWSRekognitionDetector:
 
             # Extract real human face / head crop for Live Crop Gallery
             face_b64 = occ.get('face_b64', '')
+            # Refresh the gallery crop on keyframes only, not 30 JPEG encodes/s per person
+            refresh_crop = fresh or not face_b64
             matched_face = None
             for f in detected_faces:
                 fx1, fy1, fx2, fy2 = f['box']
@@ -862,7 +1021,7 @@ class AWSRekognitionDetector:
                 head_h = max(24, int((y2 - y1) * 0.38))
                 fcrop = frame[max(0, y1):min(h_img, y1 + head_h), max(0, x1):min(w_img, x2)]
 
-            if fcrop.size > 0:
+            if refresh_crop and fcrop.size > 0:
                 try:
                     ok, fbuf = cv2.imencode('.jpg', fcrop, [cv2.IMWRITE_JPEG_QUALITY, 85])
                     if ok:
@@ -947,9 +1106,11 @@ class AWSRekognitionDetector:
                     zlbl = f"{z.get('name', 'Zone')}"
                     cv2.putText(annotated, zlbl, (p1[0] + 6, p1[1] + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, zcolor, 2)
 
-        # Compute FPS
-        dt = max(time.time() - t0, 0.001)
-        cur_fps = 1.0 / dt
+        # FPS = rate frames are actually delivered (not just this function's compute time)
+        t_end = time.time()
+        prev_out = self._last_out_time.get(cam_id)
+        self._last_out_time[cam_id] = t_end
+        cur_fps = 1.0 / max(t_end - (prev_out if prev_out else t0), 0.001)
         self._fps_ema = cur_fps if self._fps_ema is None else 0.85 * self._fps_ema + 0.15 * cur_fps
 
         # Office Object Counts & Aggregation
@@ -1004,6 +1165,7 @@ class AWSRekognitionDetector:
             'desk_count': office_counts['desks'],
             'screen_count': office_counts['screens'],
             'fps': round(self._fps_ema, 1),
+            'aws_latency_ms': self._aws_latency_ms.get(cam_id, 0),
             'current_person_crops': person_crops,
             'zone_stats': zone_occupants,
             'unassigned_count': unassigned_count,

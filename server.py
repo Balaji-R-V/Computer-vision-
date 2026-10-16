@@ -824,7 +824,10 @@ def video_feed(filename):
     def generate_mjpeg():
         cap = cv2.VideoCapture(filepath)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        
+        # Play at the file's own frame rate (detection is no longer the bottleneck, so pace explicitly)
+        frame_period = 1.0 / (cap.get(cv2.CAP_PROP_FPS) or 25.0)
+        next_due = time.time()
+
         # Check if resuming from previously saved position
         latest_cfg = active_stream_configs.setdefault(filename, config)
         start_frame = latest_cfg.get('last_frame', 0)
@@ -940,6 +943,11 @@ def video_feed(filename):
 
             _, jpeg_buf = cv2.imencode('.jpg', annotated_frame)
             frame_bytes = jpeg_buf.tobytes()
+
+            delay = next_due - time.time()
+            if delay > 0:
+                time.sleep(delay)
+            next_due = max(next_due + frame_period, time.time() - frame_period)   # no catch-up burst after a pause
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
